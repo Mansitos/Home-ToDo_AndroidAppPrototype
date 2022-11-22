@@ -5,9 +5,21 @@ import 'package:home_to_do/pages/task_create_modify.dart';
 import 'package:home_to_do/pages/users.dart';
 import 'package:home_to_do/pages/categories.dart';
 import 'custom_widgets/category_horizontal_list_view.dart';
+import 'utilities/categories_storage.dart';
+import 'utilities/globals.dart' as globals;
 
-void main() {
+Future<void> main() async {
   runApp(const MyApp());
+
+  initializeApplication();
+}
+
+void initializeApplication() async {
+  // TODO: REMOVE IN PRODUCTION! used to reset list of categories each execution...
+  globals.categoriesStorage.saveCategoriesToFile(["🏠 All", "🌳 Garden", "🍴 Kitchen"]);
+
+  // Load categories from file
+  globals.categoriesStorage.loadCategoriesFromFile();
 }
 
 class MyApp extends StatelessWidget {
@@ -43,6 +55,9 @@ class MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("asd!!!");
+
+
     return Scaffold(
       // Disable the swipe gesture to open the side-drawer
       drawerEnableOpenDragGesture: false,
@@ -50,15 +65,14 @@ class MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const TimeIntervalDropdown(),
-        actions: const <Widget>[
-          AdditionalOptionsPopUpMenu(),
+        actions: <Widget>[AdditionalOptionsPopUpMenu(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: "AddTask",
         onPressed: () {
-          print("Add task button pressed");
-          Navigator.push(context, MaterialPageRoute(builder: (context) => TaskScreen(mode: "Add")));
+          debugPrint("Add task button pressed");
+          Navigator.push(context, MaterialPageRoute(builder: (context) => TaskScreen(mode: "Add"))).then((value) => setState(() {}));
         },
         tooltip: "Schedule a new task",
         child: const Icon(Icons.add),
@@ -94,9 +108,9 @@ class MainScreenState extends State<MainScreen> {
         Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const SizedBox(
+            SizedBox(
               height: 45,
-              child: CategoryHorizontalListView(categories: ["🏠 All", "🌳 Garden", "🍴 Kitchen", "😽 Cat", "🚾 Bathroom", "🍔 Food"]),
+              child: CategoryHorizontalListView(categories: globals.categories),
             ),
             Expanded(
               child: ListView.builder(
@@ -107,7 +121,7 @@ class MainScreenState extends State<MainScreen> {
                     child: GestureDetector(
                       onTapDown: _storePosition,
                       child: Card(
-                        child: TaskListTileBuilder(context,widget.key,_taskTapPosition),
+                        child: TaskListTileBuilder(context, widget.key, _taskTapPosition),
                       ),
                     ),
                   );
@@ -123,28 +137,26 @@ class MainScreenState extends State<MainScreen> {
 
   void _storePosition(TapDownDetails details) {
     _taskTapPosition = details.globalPosition;
-    print("Task being onLongPressed");
+    debugPrint("Task being onLongPressed");
   }
 
 }
 
-Widget TaskListTileBuilder(context,key,tapPosition) {
-
-
+Widget TaskListTileBuilder(context, key, tapPosition) {
   return ListTile(
       onLongPress: () {
         final RenderBox renderBox = context.findRenderObject();
         showMenu(
           context: context,
           position: RelativeRect.fromRect(
-              tapPosition & Size(0,0), // smaller rect, the touch area
-              Offset.zero & overlay.size // Bigger rect, the entire screen
+              tapPosition & Size(0, 0), // smaller rect, the touch area
+              tapPosition & Size(0, 0) // Bigger rect, the entire screen
           ),
           items: <PopupMenuEntry>[
             PopupMenuItem(
               //value: this._index,
               child: Row(
-                children: const [Text("Modify"),Text("Delete")],
+                children: const [Text("Modify"), Text("Delete")],
               ),
             )
           ],
@@ -242,36 +254,38 @@ class AdditionalOptionsPopUpMenuState extends State<AdditionalOptionsPopUpMenu> 
     return PopupMenuButton(
         onSelected: (int value) {
           setState(() {
+            debugPrint("mhh");
             selectedValue = value;
-            print(selectedValue);
+            debugPrint(selectedValue.toString());
             if (value == 1) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen())).then((_) => setState(() {}));
             }
             if (value == 2) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => CategoriesScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => CategoriesScreen())).then((_) => setState(() {}));
             }
             if (value == 3) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => UserScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => UserScreen())).then((_) => setState(() {}));
             }
           });
         },
-        itemBuilder: (context) => [
-              PopupMenuItem(
-                child: const Text("Search"),
-                value: 1,
-                onTap: () {},
-              ),
-              PopupMenuItem(
-                child: const Text("Manage Categories"),
-                value: 2,
-                onTap: () {},
-              ),
-              PopupMenuItem(
-                child: const Text("Manage Users"),
-                value: 3,
-                onTap: () {},
-              ),
-            ]);
+        itemBuilder: (context) =>
+        [
+          PopupMenuItem(
+            child: const Text("Search"),
+            value: 1,
+            onTap: () {},
+          ),
+          PopupMenuItem(
+            child: const Text("Manage Categories"),
+            value: 2,
+            onTap: () {},
+          ),
+          PopupMenuItem(
+            child: const Text("Manage Users"),
+            value: 3,
+            onTap: () {},
+          ),
+        ]);
   }
 }
 
@@ -284,18 +298,18 @@ class MainMenuBottomNavBarState extends State<MainMenuBottomNavBar> {
         selectedIndex = index;
       }
       if (index == 0) {
-        print("Show user selection");
+        debugPrint("Show user selection");
         widget.showUserDropUpFunction!();
       }
       if (index == 3) {
-        print("Show main menu");
+        debugPrint("Show main menu");
         Scaffold.of(context).openDrawer();
       }
       if (index == 1) {
-        print("Switch to list view");
+        debugPrint("Switch to list view");
       }
       if (index == 2) {
-        print("Switch to calendar view");
+        debugPrint("Switch to calendar view");
       }
     });
   }
@@ -310,7 +324,9 @@ class MainMenuBottomNavBarState extends State<MainMenuBottomNavBar> {
         BottomNavigationBarItem(icon: Icon(Icons.menu), label: "Main Menu"),
       ],
       selectedItemColor: Colors.amber,
-      unselectedItemColor: Theme.of(context).scaffoldBackgroundColor,
+      unselectedItemColor: Theme
+          .of(context)
+          .scaffoldBackgroundColor,
       currentIndex: selectedIndex,
       onTap: _onItemTapped,
     );

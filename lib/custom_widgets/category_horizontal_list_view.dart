@@ -14,6 +14,9 @@ class CategoryHorizontalListViewState extends State<CategoryHorizontalListView> 
 
   @override
   Widget build(BuildContext context) {
+
+    print("HORIZONTAL LIST CAT UPDATED!");
+
     return ListView.builder(
       shrinkWrap: false,
       scrollDirection: Axis.horizontal,
