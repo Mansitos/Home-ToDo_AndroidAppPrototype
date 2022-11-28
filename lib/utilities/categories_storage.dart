@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'package:home_to_do/data_types/category.dart';
+import 'package:home_to_do/utilities/categories_utilities.dart';
 import 'package:path_provider/path_provider.dart';
 import '/utilities/globals.dart' as globals;
+import 'package:flutter/material.dart';
 
 // This class handle/allows categories persistency over sessions.
 // The class provides file save/load mechanism for categories.
@@ -17,39 +20,46 @@ class CategoriesStorage {
     return File('$path/categories.txt');
   }
 
-  Future<File> saveCategoriesToFile(List<String> categories) async {
+  Future<File> saveCategoriesToFile(List<Category> categories) async {
     final file = await _localCategoriesFile;
+
+    // Updating globals entry TODO: uselsse, remove?
+    // globals.categories = categories;
 
     String encode = "";
     if (categories.isNotEmpty) {
       for (int i = 0; i <= categories.length - 1; i++) {
-        encode = encode + categories[i] + ",";
+        encode += serializeCategory(categories[i]);
+        encode += '|';
       }
       encode = encode.substring(0, encode.length - 1); // Remove last separator
     }
 
-    // Updating globals entry
-    globals.categories = categories;
-
-    print("Categories saved succesfully! location/path: " + file.path);
-    print(categories);
-    return file.writeAsString('$encode');
+    debugPrint("\n > Categories saved successfully! location/path: " + file.path);
+    debugPrint(categories.toString());
+    return file.writeAsString(encode);
   }
 
-  void loadCategoriesFromFile() async {
+  Future<bool> loadCategoriesFromFile() async {
     try {
       final file = await _localCategoriesFile;
       final contents = await file.readAsString();
-      List<String> categories = contents.split(',');
+
+      List<String> encodedCategories = contents.split('|');
+      List<Category> categories = [];
+
+      for (var i = 0; i < encodedCategories.length; i++) {
+        categories.add(decodeSerializedCategory(encodedCategories[i]));
+      }
       // Updating globals entry
       globals.categories = categories;
-      print("Categories loaded succesfully!");
-      print(categories);
+      debugPrint(" > Categories loaded successfully! (" + categories.length.toString() + ")");
+      debugPrint(categories.toString());
+      return true;
     } catch (e) {
-      print("Error in loading categories file");
-      print(e);
+      debugPrint(" > Error in loading categories file!");
+      debugPrint(e.toString());
+      return false;
     }
   }
-
 }
-

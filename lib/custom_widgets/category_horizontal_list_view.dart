@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:home_to_do/data_types/category.dart';
+import 'package:home_to_do/utilities/categories_utilities.dart';
 
 class CategoryHorizontalListView extends StatefulWidget {
   const CategoryHorizontalListView({Key? key, required this.categories}) : super(key: key);
 
-  final List<String> categories;
+  final List<Category> categories;
 
   @override
   State<CategoryHorizontalListView> createState() => CategoryHorizontalListViewState();
@@ -14,7 +16,7 @@ class CategoryHorizontalListViewState extends State<CategoryHorizontalListView> 
 
   @override
   Widget build(BuildContext context) {
-
+    // TODO: Remove
     print("HORIZONTAL LIST CAT UPDATED!");
 
     return ListView.builder(
@@ -36,7 +38,7 @@ class CategoryHorizontalListViewState extends State<CategoryHorizontalListView> 
               selected_index = index;
             });
           },
-          child: Text(widget.categories[index]),
+          child: Text(serializeCategory(widget.categories[index])),
           style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0))));
     } else {
       return ElevatedButton(
@@ -45,7 +47,7 @@ class CategoryHorizontalListViewState extends State<CategoryHorizontalListView> 
               selected_index = index;
             });
           },
-          child: Text(widget.categories[index]),
+          child: Text(serializeCategory(widget.categories[index])),
           style: ElevatedButton.styleFrom(primary: Colors.amber, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0))));
     }
   }

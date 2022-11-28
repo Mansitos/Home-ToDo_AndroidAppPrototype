@@ -25,9 +25,8 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
     String title = "Create new category";
     if (widget.modifyMode == true) {
       title = "Modify category";
-      String oldName = globals.categories[widget.modifyIndex];
-      oldCategoryEmoji = oldName.substring(0,2);
-      oldCategoryName = oldName.substring(3);
+      oldCategoryEmoji = globals.categories[widget.modifyIndex].emoji;
+      oldCategoryName = globals.categories[widget.modifyIndex].name;
     }
 
     return AlertDialog(
@@ -42,11 +41,12 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                 TextFormField(
                   style: const TextStyle(fontSize: 40),
                   initialValue: (() {
-                    if(widget.modifyMode == true){
+                    if (widget.modifyMode == true) {
                       return oldCategoryEmoji;
-                    }else{
+                    } else {
                       return '🚩';
-                    };
+                    }
+                    ;
                   }()),
                   maxLength: 1,
                   decoration: const InputDecoration(
@@ -59,10 +59,15 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                   validator: (String? value) {
                     // Emoji valid chars
                     final RegExp REGEX_EMOJI = RegExp(r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
+                    print("old:" + oldCategoryName);
+                    print("actual:" + categoryName);
+
                     if (value == null || value.isEmpty) {
                       return 'Please enter an emoji!';
                     } else if (!REGEX_EMOJI.hasMatch(value)) {
                       return 'Only emoji are allowed!';
+                    } else if (!checkIfAvailable("", value, oldCategoryEmoji, widget.modifyMode)) {
+                      return 'Emoji already used!';
                     } else {
                       categoryEmoji = value;
                       return null;
@@ -72,11 +77,12 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                 TextFormField(
                   maxLength: 20,
                   initialValue: (() {
-                    if(widget.modifyMode == true){
+                    if (widget.modifyMode == true) {
                       return oldCategoryName;
-                    }else{
+                    } else {
                       return 'New category';
-                    };
+                    }
+                    ;
                   }()),
                   decoration: const InputDecoration(
                     hintText: 'What\' the category name?',
@@ -91,6 +97,8 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                       return 'Please enter some text!';
                     } else if (!validCharacters.hasMatch(value)) {
                       return 'Invalid characters!';
+                    } else if (!checkIfAvailable(value, "", oldCategoryName, widget.modifyMode)) {
+                      return 'Name already used!';
                     } else {
                       categoryName = value;
                       return null;

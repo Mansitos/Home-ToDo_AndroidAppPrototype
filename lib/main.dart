@@ -1,25 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:home_to_do/pages/search.dart';
-import 'package:home_to_do/pages/task_create_modify.dart';
-import 'package:home_to_do/pages/users.dart';
-import 'package:home_to_do/pages/categories.dart';
+import 'package:home_to_do/data_types/category.dart';
+import 'package:home_to_do/pages/search_page.dart';
+import 'package:home_to_do/pages/task_page.dart';
+import 'package:home_to_do/pages/users_page.dart';
+import 'package:home_to_do/pages/categories_page.dart';
+import 'package:home_to_do/utilities/categories_utilities.dart';
+import 'package:home_to_do/utilities/task_utilities.dart';
 import 'custom_widgets/category_horizontal_list_view.dart';
-import 'utilities/categories_storage.dart';
+import 'data_types/task.dart';
+import 'data_types/user.dart';
 import 'utilities/globals.dart' as globals;
 
 Future<void> main() async {
   runApp(const MyApp());
-
-  initializeApplication();
 }
 
-void initializeApplication() async {
-  // TODO: REMOVE IN PRODUCTION! used to reset list of categories each execution...
-  globals.categoriesStorage.saveCategoriesToFile(["🏠 All", "🌳 Garden", "🍴 Kitchen"]);
+Future<bool> initializeApplicationVariables() async {
+  // Load categories and tasks from file
+  await globals.categoriesStorage.loadCategoriesFromFile();
+  await globals.tasksStorage.loadTasksIDFromFile();
+  await globals.tasksStorage.loadTasksFromFile();
 
-  // Load categories from file
-  globals.categoriesStorage.loadCategoriesFromFile();
+  // TODO: REMOVE IN PRODUCTION!
+  //await globals.categoriesStorage.saveCategoriesToFile([Category(name:"All",emoji: "🏠")]);
+  //await globals.tasksStorage.saveTasksToFile([]);
+  for (var i = 0; i < globals.tasks.length; i++) {}
+  return true;
 }
 
 class MyApp extends StatelessWidget {
@@ -27,17 +34,49 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "Home-ToDo",
-      theme: ThemeData(
-          scaffoldBackgroundColor: const Color.fromRGBO(42, 42, 42, 100),
-          colorScheme: const ColorScheme.light(
-            primary: Colors.white,
-            onPrimary: Colors.black,
-            secondary: Colors.amber,
-          )),
-      home: const MainScreen(),
-    );
+    return FutureBuilder(
+        future: initializeApplicationVariables(),
+        builder: (context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.hasData) {
+            return MaterialApp(
+              title: "Home-ToDo",
+              theme: ThemeData(
+                  scaffoldBackgroundColor: const Color.fromRGBO(42, 42, 42, 100),
+                  colorScheme: const ColorScheme.light(
+                    primary: Colors.white,
+                    onPrimary: Colors.black,
+                    secondary: Colors.amber,
+                  )),
+              home: const MainScreen(),
+            );
+          } else {
+            return MaterialApp(
+              title: "Home-ToDo",
+              theme: ThemeData(
+                  scaffoldBackgroundColor: const Color.fromRGBO(42, 42, 42, 100),
+                  colorScheme: const ColorScheme.light(
+                    primary: Colors.white,
+                    onPrimary: Colors.black,
+                    secondary: Colors.amber,
+                  )),
+              home: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  const SizedBox(width: 60, height: 60, child: CircularProgressIndicator()),
+                  DefaultTextStyle(
+                      style: Theme
+                          .of(context)
+                          .textTheme
+                          .headline1!,
+                      child: const Text(
+                        "Loading data...",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ))
+                ],
+              ),
+            );
+          }
+        });
   }
 }
 
@@ -51,12 +90,9 @@ class MainScreenState extends State<MainScreen> {
     });
   }
 
-  var _taskTapPosition;
-
   @override
   Widget build(BuildContext context) {
-    debugPrint("asd!!!");
-
+    print("build main screen state");
 
     return Scaffold(
       // Disable the swipe gesture to open the side-drawer
@@ -65,7 +101,8 @@ class MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const TimeIntervalDropdown(),
-        actions: <Widget>[AdditionalOptionsPopUpMenu(),
+        actions: const <Widget>[
+          AdditionalOptionsPopUpMenu(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -92,13 +129,17 @@ class MainScreenState extends State<MainScreen> {
             ListTile(
               title: const Text('Item 1'),
               onTap: () {
-                Navigator.pop(context);
+                setState(() {
+                  Navigator.pop(context);
+                });
               },
             ),
             ListTile(
               title: const Text('Item 2'),
               onTap: () {
-                Navigator.pop(context);
+                setState(() {
+                  Navigator.pop(context);
+                });
               },
             ),
           ],
@@ -113,19 +154,9 @@ class MainScreenState extends State<MainScreen> {
               child: CategoryHorizontalListView(categories: globals.categories),
             ),
             Expanded(
-              child: ListView.builder(
+              child: ListView(
                 shrinkWrap: true,
-                itemBuilder: (ctx, int) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 5, right: 5, top: 1, bottom: 0),
-                    child: GestureDetector(
-                      onTapDown: _storePosition,
-                      child: Card(
-                        child: TaskListTileBuilder(context, widget.key, _taskTapPosition),
-                      ),
-                    ),
-                  );
-                },
+                children: listOfTaskBuilder(context),
               ),
             ),
           ],
@@ -134,36 +165,37 @@ class MainScreenState extends State<MainScreen> {
       ]),
     );
   }
-
-  void _storePosition(TapDownDetails details) {
-    _taskTapPosition = details.globalPosition;
-    debugPrint("Task being onLongPressed");
-  }
-
 }
 
-Widget TaskListTileBuilder(context, key, tapPosition) {
-  return ListTile(
-      onLongPress: () {
-        final RenderBox renderBox = context.findRenderObject();
-        showMenu(
-          context: context,
-          position: RelativeRect.fromRect(
-              tapPosition & Size(0, 0), // smaller rect, the touch area
-              tapPosition & Size(0, 0) // Bigger rect, the entire screen
-          ),
-          items: <PopupMenuEntry>[
-            PopupMenuItem(
-              //value: this._index,
-              child: Row(
-                children: const [Text("Modify"), Text("Delete")],
-              ),
-            )
-          ],
-        );
-      },
-      title: Text('Task'),
-      subtitle: const Text('This is a description of the task!'));
+List<Widget> listOfTaskBuilder(BuildContext context) {
+  List<Task> tasks = globals.tasks;
+
+  print("called");
+  print(tasks.length);
+
+  List<Widget> taskTiles = [];
+
+  for (var i = 0; i < tasks.length; i++) {
+    Widget taskTile = TaskListTileBuilder(context, tasks[i]);
+    taskTiles.add(taskTile);
+  }
+
+  return taskTiles;
+}
+
+Widget TaskListTileBuilder(context, Task task) {
+  return Padding(
+    padding: const EdgeInsets.only(left: 6, right: 6, top: 3, bottom: 3),
+    child: Container(
+      color: Colors.white,
+      child: const ListTile(
+        leading: Text("asd"),
+        title: Text("asdone"),
+        trailing: Text("miao"),
+      )],
+
+    ),
+  );
 }
 
 class MainScreen extends StatefulWidget {
@@ -251,6 +283,9 @@ class AdditionalOptionsPopUpMenuState extends State<AdditionalOptionsPopUpMenu> 
 
   @override
   Widget build(BuildContext context) {
+    setState(() {}); // TODO ?? NO ??
+
+    print("building add opt pop menu");
     return PopupMenuButton(
         onSelected: (int value) {
           setState(() {
