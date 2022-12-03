@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:home_to_do/data_types/category.dart';
 import 'package:home_to_do/pages/search_page.dart';
 import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/pages/users_page.dart';
 import 'package:home_to_do/pages/categories_page.dart';
-import 'package:home_to_do/utilities/categories_utilities.dart';
-import 'package:home_to_do/utilities/task_utilities.dart';
 import 'custom_widgets/category_horizontal_list_view.dart';
+import 'custom_widgets/task_tile.dart';
+import 'custom_widgets/user_selection_dropup.dart';
 import 'data_types/task.dart';
-import 'data_types/user.dart';
 import 'utilities/globals.dart' as globals;
 
 Future<void> main() async {
@@ -22,10 +20,12 @@ Future<bool> initializeApplicationVariables() async {
   await globals.tasksStorage.loadTasksIDFromFile();
   await globals.tasksStorage.loadTasksFromFile();
 
-  // TODO: REMOVE IN PRODUCTION!
-  //await globals.categoriesStorage.saveCategoriesToFile([Category(name:"All",emoji: "🏠")]);
-  //await globals.tasksStorage.saveTasksToFile([]);
-  for (var i = 0; i < globals.tasks.length; i++) {}
+  // TODO: THINGS TO REMOVE IN PRODUCTION!
+  await globals.categoriesStorage.saveCategoriesToFile([]);
+  await globals.tasksStorage.saveTasksToFile([]);
+  for (var i = 0; i < globals.tasks.length; i++) {
+    // ...
+  }
   return true;
 }
 
@@ -37,6 +37,7 @@ class MyApp extends StatelessWidget {
     return FutureBuilder(
         future: initializeApplicationVariables(),
         builder: (context, AsyncSnapshot<bool> snapshot) {
+          // If Application Initialized....
           if (snapshot.hasData) {
             return MaterialApp(
               title: "Home-ToDo",
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
               home: const MainScreen(),
             );
           } else {
+            // If Application did not finish initialization phase....
             return MaterialApp(
               title: "Home-ToDo",
               theme: ThemeData(
@@ -64,10 +66,7 @@ class MyApp extends StatelessWidget {
                 children: [
                   const SizedBox(width: 60, height: 60, child: CircularProgressIndicator()),
                   DefaultTextStyle(
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .headline1!,
+                      style: Theme.of(context).textTheme.headline1!,
                       child: const Text(
                         "Loading data...",
                         style: TextStyle(color: Colors.white, fontSize: 16),
@@ -81,28 +80,30 @@ class MyApp extends StatelessWidget {
 }
 
 class MainScreenState extends State<MainScreen> {
-  final userSelectionDropUpKey = GlobalKey<UserSelectionDropUpState>();
+  final userSelectionDropUpKey = GlobalKey<UserSelectionDropUpWidgetState>();
 
-  // When called enable or disable (visible = !visible) the user selection widget
+  // Show/Hide user pop-up widget
   void showUserDropUp() {
     userSelectionDropUpKey.currentState!.setState(() {
       userSelectionDropUpKey.currentState!.changeIsVisible();
     });
   }
 
+  void rebuildMainScreen(){
+    setState(() {
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    print("build main screen state");
-
     return Scaffold(
-      // Disable the swipe gesture to open the side-drawer
       drawerEnableOpenDragGesture: false,
-      //backgroundColor: MyApp.mainBackgroundColor,
       appBar: AppBar(
+        elevation: 1,
         automaticallyImplyLeading: false,
-        title: const TimeIntervalDropdown(),
-        actions: const <Widget>[
-          AdditionalOptionsPopUpMenu(),
+        title: const MainScreenTimeIntervalSelectionDropdown(),
+        actions: <Widget>[
+          MainScreenAdditionalOptionsDropdown(rebuildMainScreenCallback: rebuildMainScreen),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -127,7 +128,7 @@ class MainScreenState extends State<MainScreen> {
               child: Text('Home To-Do'),
             ),
             ListTile(
-              title: const Text('Item 1'),
+              title: const Text('Option 1'),
               onTap: () {
                 setState(() {
                   Navigator.pop(context);
@@ -135,7 +136,7 @@ class MainScreenState extends State<MainScreen> {
               },
             ),
             ListTile(
-              title: const Text('Item 2'),
+              title: const Text('Option 2'),
               onTap: () {
                 setState(() {
                   Navigator.pop(context);
@@ -154,48 +155,32 @@ class MainScreenState extends State<MainScreen> {
               child: CategoryHorizontalListView(categories: globals.categories),
             ),
             Expanded(
-              child: ListView(
-                shrinkWrap: true,
-                children: listOfTaskBuilder(context),
-              ),
+              child: _tasksPageMainWidgetBuilder(context, rebuildMainScreen),
             ),
           ],
         ),
-        UserSelectionDropUp(key: userSelectionDropUpKey),
+        UserSelectionDropUpWidget(key: userSelectionDropUpKey),
       ]),
     );
   }
 }
 
-List<Widget> listOfTaskBuilder(BuildContext context) {
+List<Widget> listOfTaskBuilder(BuildContext context, void Function() rebuildMainScreenCallback) {
   List<Task> tasks = globals.tasks;
-
-  print("called");
-  print(tasks.length);
-
   List<Widget> taskTiles = [];
 
+
+
   for (var i = 0; i < tasks.length; i++) {
-    Widget taskTile = TaskListTileBuilder(context, tasks[i]);
+    Widget taskTile = TaskTileWidget(
+      task: tasks[i],
+      onChange: () {
+        rebuildMainScreenCallback();
+      },
+    );
     taskTiles.add(taskTile);
   }
-
   return taskTiles;
-}
-
-Widget TaskListTileBuilder(context, Task task) {
-  return Padding(
-    padding: const EdgeInsets.only(left: 6, right: 6, top: 3, bottom: 3),
-    child: Container(
-      color: Colors.white,
-      child: const ListTile(
-        leading: Text("asd"),
-        title: Text("asdone"),
-        trailing: Text("miao"),
-      )],
-
-    ),
-  );
 }
 
 class MainScreen extends StatefulWidget {
@@ -205,25 +190,20 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => MainScreenState();
 }
 
-class UserSelectionDropUp extends StatefulWidget {
-  const UserSelectionDropUp({Key? key}) : super(key: key);
+class MainScreenAdditionalOptionsDropdown extends StatefulWidget {
+  MainScreenAdditionalOptionsDropdown({Key? key, required this.rebuildMainScreenCallback}) : super(key: key);
+
+  void Function() rebuildMainScreenCallback;
 
   @override
-  State<UserSelectionDropUp> createState() => UserSelectionDropUpState();
+  State<MainScreenAdditionalOptionsDropdown> createState() => MainScreenAdditionalOptionsDropdownState();
 }
 
-class AdditionalOptionsPopUpMenu extends StatefulWidget {
-  const AdditionalOptionsPopUpMenu({Key? key}) : super(key: key);
+class MainScreenTimeIntervalSelectionDropdown extends StatefulWidget {
+  const MainScreenTimeIntervalSelectionDropdown({Key? key}) : super(key: key);
 
   @override
-  State<AdditionalOptionsPopUpMenu> createState() => AdditionalOptionsPopUpMenuState();
-}
-
-class TimeIntervalDropdown extends StatefulWidget {
-  const TimeIntervalDropdown({Key? key}) : super(key: key);
-
-  @override
-  State<TimeIntervalDropdown> createState() => TimeIntervalDropdownState();
+  State<MainScreenTimeIntervalSelectionDropdown> createState() => MainScreenTimeIntervalSelectionDropdownState();
 }
 
 class MainMenuBottomNavBar extends StatefulWidget {
@@ -237,55 +217,11 @@ class MainMenuBottomNavBar extends StatefulWidget {
   State<MainMenuBottomNavBar> createState() => MainMenuBottomNavBarState();
 }
 
-class UserSelectionDropUpState extends State<UserSelectionDropUp> {
-  int selectedUserIndex = 0;
-  bool isVisible = false;
-
-  changeIsVisible() => {isVisible = !isVisible};
-
-  @override
-  Widget build(BuildContext context) {
-    return Visibility(
-      visible: isVisible,
-      child: Align(
-        child: Container(
-          height: 250,
-          width: 70,
-          child: Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-            child: Padding(
-              padding: const EdgeInsets.all(2.0),
-              child: Container(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemBuilder: (ctx, int) {
-                    return Padding(
-                        padding: const EdgeInsets.only(left: 5, right: 5, top: 1, bottom: 0),
-                        child: ElevatedButton(
-                          child: const Text("A"),
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(shape: const CircleBorder(), fixedSize: const Size(20, 20)),
-                        ));
-                  },
-                ),
-              ),
-            ),
-          ),
-        ),
-        alignment: const FractionalOffset(0.25 / 4, 1),
-      ),
-    );
-  }
-}
-
-class AdditionalOptionsPopUpMenuState extends State<AdditionalOptionsPopUpMenu> {
+class MainScreenAdditionalOptionsDropdownState extends State<MainScreenAdditionalOptionsDropdown> {
   int selectedValue = 0;
 
   @override
   Widget build(BuildContext context) {
-    setState(() {}); // TODO ?? NO ??
-
-    print("building add opt pop menu");
     return PopupMenuButton(
         onSelected: (int value) {
           setState(() {
@@ -293,35 +229,77 @@ class AdditionalOptionsPopUpMenuState extends State<AdditionalOptionsPopUpMenu> 
             selectedValue = value;
             debugPrint(selectedValue.toString());
             if (value == 1) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen())).then((_) => setState(() {}));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen())).then((_) => setState(() {widget.rebuildMainScreenCallback();}));
             }
             if (value == 2) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => CategoriesScreen())).then((_) => setState(() {}));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => CategoriesScreen())).then((_) => setState(() {widget.rebuildMainScreenCallback();}));
             }
             if (value == 3) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => UserScreen())).then((_) => setState(() {}));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => UserScreen())).then((_) => setState(() {widget.rebuildMainScreenCallback();}));
             }
           });
         },
-        itemBuilder: (context) =>
-        [
-          PopupMenuItem(
-            child: const Text("Search"),
-            value: 1,
-            onTap: () {},
-          ),
-          PopupMenuItem(
-            child: const Text("Manage Categories"),
-            value: 2,
-            onTap: () {},
-          ),
-          PopupMenuItem(
-            child: const Text("Manage Users"),
-            value: 3,
-            onTap: () {},
-          ),
-        ]);
+        itemBuilder: (context) => [
+              PopupMenuItem(
+                child: const Text("Search"),
+                value: 1,
+                onTap: () {},
+              ),
+              PopupMenuItem(
+                child: const Text("Manage Categories"),
+                value: 2,
+                onTap: () {},
+              ),
+              PopupMenuItem(
+                child: const Text("Manage Users"),
+                value: 3,
+                onTap: () {},
+              ),
+            ]);
   }
+}
+
+Widget _tasksPageMainWidgetBuilder(context, void Function() test) {
+  // TODO: change with "filtered tasks to visualize, placeholder for now.."
+  if (globals.tasks.isNotEmpty) {
+    return ListView(
+      shrinkWrap: true,
+      children: listOfTaskBuilder(context, test),
+    );
+  } else {
+    return _noTasksWidgetBuilder();
+  }
+}
+
+Widget _noTasksWidgetBuilder() {
+  print("asd");
+  return Center(
+      child: Padding(
+    padding: const EdgeInsets.all(50),
+    child: SizedBox(
+      height: 300,
+      child: Column(
+        children: const [
+          Text("No tasks found!", style: TextStyle(fontSize: 22, color: Colors.white)),
+          Padding(
+            padding: EdgeInsets.all(12),
+            child: Text(" 🔍",
+                style: TextStyle(
+                  fontSize: 75,
+                )),
+          ),
+          Text(
+            "There are no tasks matching the currently selected filters! You can rest 😝",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ),
+  ));
 }
 
 class MainMenuBottomNavBarState extends State<MainMenuBottomNavBar> {
@@ -359,16 +337,14 @@ class MainMenuBottomNavBarState extends State<MainMenuBottomNavBar> {
         BottomNavigationBarItem(icon: Icon(Icons.menu), label: "Main Menu"),
       ],
       selectedItemColor: Colors.amber,
-      unselectedItemColor: Theme
-          .of(context)
-          .scaffoldBackgroundColor,
+      unselectedItemColor: Theme.of(context).scaffoldBackgroundColor,
       currentIndex: selectedIndex,
       onTap: _onItemTapped,
     );
   }
 }
 
-class TimeIntervalDropdownState extends State<TimeIntervalDropdown> {
+class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeIntervalSelectionDropdown> {
   String dropdownValue = 'Today';
 
   @override
@@ -382,11 +358,11 @@ class TimeIntervalDropdownState extends State<TimeIntervalDropdown> {
                 dropdownValue = newValue!;
               });
             },
-            items: selectedTimeIntervalDropdownItems));
+            items: selectedMainScreenTimeIntervalSelectionDropdownItems));
   }
 }
 
-List<DropdownMenuItem<String>> get selectedTimeIntervalDropdownItems {
+List<DropdownMenuItem<String>> get selectedMainScreenTimeIntervalSelectionDropdownItems {
   List<DropdownMenuItem<String>> items = const [
     DropdownMenuItem(child: Text("Today"), value: "Today"),
     DropdownMenuItem(child: Text("Tomorrow"), value: "Tomorrow"),

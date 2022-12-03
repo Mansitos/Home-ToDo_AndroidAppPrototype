@@ -35,9 +35,49 @@ class CategoriesScreenState extends State<CategoriesScreen> {
         tooltip: "Create new category",
         child: const Icon(Icons.add),
       ),
-      body: CategoriesGridVisualizer(),
+      body: _categoryPageMainWidgetBuilder(),
     );
   }
+
+  Widget _categoryPageMainWidgetBuilder() {
+    if (globals.categories.length > 1) {
+      return CategoriesGridVisualizer();
+    } else {
+      return _noCategoriesWidgetBuilder();
+    }
+  }
+
+  Widget _noCategoriesWidgetBuilder() {
+    return Center(
+        child: Padding(
+      padding: const EdgeInsets.all(50),
+      child: SizedBox(
+        height: 300,
+        child: Column(
+          children: const [
+            Text("No categories found!", style: TextStyle(fontSize: 22, color: Colors.white)),
+            Padding(
+              padding: EdgeInsets.all(12),
+              child: Text("😭",
+                  style: TextStyle(
+                    fontSize: 75,
+                  )),
+            ),
+            Text(
+              "Try to create a new category by pressing the + button at the bottom right!",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    ));
+  }
+
+// 🍔
 }
 
 class CategoriesGridVisualizer extends StatefulWidget {
@@ -137,11 +177,11 @@ class CategoriesGridVisualizerState extends State<CategoriesGridVisualizer> {
                           children: [
                             Text(
                               categoriesList[index].emoji,
-                              style: TextStyle(fontSize: 35),
+                              style: const TextStyle(fontSize: 35),
                             ),
                             Text(
                               categoriesList[index].name,
-                              style: TextStyle(fontSize: 20),
+                              style: const TextStyle(fontSize: 20),
                             ),
                           ],
                         )),

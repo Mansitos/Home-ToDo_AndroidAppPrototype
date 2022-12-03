@@ -48,9 +48,16 @@ class CategoriesStorage {
       List<String> encodedCategories = contents.split('|');
       List<Category> categories = [];
 
-      for (var i = 0; i < encodedCategories.length; i++) {
-        categories.add(decodeSerializedCategory(encodedCategories[i]));
+      if (encodedCategories.length > 1) {
+        for (var i = 0; i < encodedCategories.length; i++) {
+          categories.add(decodeSerializedCategory(encodedCategories[i]));
+        }
+      }else{
+        categories.add(Category(name: "All", emoji: "🏠"));
+        await globals.categoriesStorage.saveCategoriesToFile(categories);
+        print(" > Regenerating default category!");
       }
+
       // Updating globals entry
       globals.categories = categories;
       debugPrint(" > Categories loaded successfully! (" + categories.length.toString() + ")");

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:home_to_do/custom_widgets/score_selection_widget.dart';
 import 'package:home_to_do/data_types/category.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
@@ -15,14 +16,26 @@ class TaskScreen extends StatefulWidget {
 }
 
 class TaskScreenState extends State<TaskScreen> {
+  Category startingTaskCategory = globals.categories[0];
+  DateTime startingSelectedDate = DateTime.now();
+  TimeOfDay startingSelectedHour = TimeOfDay.now();
+  bool startingReminder = false;
+
   String? taskName;
   String? taskDescription;
   Category? taskCategory;
-  DateTime selectedDate = DateTime.now();
-  TimeOfDay selectedHour = TimeOfDay.now();
-  bool? reminder = false;
-  int? score;
+  DateTime? selectedDate;
+  TimeOfDay? selectedHour;
+  bool? reminder;
+  int score = 3; // the value is the default one
 
+  void updateScore(int newScore) {
+    setState(() {
+      score = newScore;
+    });
+  }
+
+  // Date selection pop-up widget
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
         builder: (context, child) {
@@ -38,7 +51,7 @@ class TaskScreenState extends State<TaskScreen> {
           );
         },
         context: context,
-        initialDate: selectedDate,
+        initialDate: _getSelectedDate()!,
         firstDate: DateTime.now(),
         lastDate: DateTime(2101));
     setState(() {
@@ -48,6 +61,7 @@ class TaskScreenState extends State<TaskScreen> {
     });
   }
 
+  // Hour selection pop-up widget
   Future<void> _selectHour(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
         builder: (context, child) {
@@ -69,7 +83,7 @@ class TaskScreenState extends State<TaskScreen> {
         initialTime: TimeOfDay.now());
     setState(() {
       selectedHour = picked!;
-      //TODO: add validation?
+      //TODO: add validation? mi sa non serve perché di base c'è il min-start value da ora in poi
       debugPrint(selectedHour.toString() + " selected!");
     });
   }
@@ -95,16 +109,27 @@ class TaskScreenState extends State<TaskScreen> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
-                    children: const [
-                      CategoryDropDownSelector(),
+                    children: [
+                      CategoryDropDownSelector(
+                        selectedCategory: _getSelectedCategory()!,
+                        onChange: (Category val) {
+                          setState(() {
+                            taskCategory = val;
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(left: 20),
+                  padding: const EdgeInsets.only(left: 20, right: 20),
                   child: TextFormField(
+                      initialValue: taskName,
                       onSaved: (String? value) {
                         setState(() {});
+                      },
+                      onChanged: (String? value) {
+                        taskName = value;
                       },
                       maxLength: 50,
                       validator: (String? value) {
@@ -118,21 +143,21 @@ class TaskScreenState extends State<TaskScreen> {
                           return null;
                         }
                       },
-                      decoration: const InputDecoration(
-                        hintText: "Insert task name...",
-                        labelText: "Task name",
-                        labelStyle: TextStyle(color: Colors.white),
-                        hintStyle: TextStyle(color: Colors.white),
-                      )),
+                      style: const TextStyle(fontSize: 18),
+                      decoration: const InputDecoration(hintText: "Insert task name...", labelText: "Task name", labelStyle: TextStyle(color: Colors.white), hintStyle: TextStyle(color: Colors.white), counterStyle: TextStyle(color: Colors.white))),
                 ),
                 const Divider(),
                 Padding(
-                  padding: const EdgeInsets.only(left: 20),
+                  padding: const EdgeInsets.only(left: 20, right: 20),
                   child: TextFormField(
+                      initialValue: taskDescription,
                       onSaved: (String? value) {
                         setState(() {});
                       },
-                      maxLength: 300,
+                      onChanged: (String? value) {
+                        taskDescription = value;
+                      },
+                      maxLength: 150,
                       validator: (String? value) {
                         final validCharacters = RegExp(r'^[a-zA-Z0-9]+$');
                         if (value == null || value.isEmpty) {
@@ -144,12 +169,8 @@ class TaskScreenState extends State<TaskScreen> {
                           return null;
                         }
                       },
-                      decoration: const InputDecoration(
-                        hintText: "Insert task description...",
-                        labelText: "Task description",
-                        labelStyle: TextStyle(color: Colors.white),
-                        hintStyle: TextStyle(color: Colors.white),
-                      )),
+                      style: const TextStyle(fontSize: 18),
+                      decoration: const InputDecoration(hintText: "Insert task description...", labelText: "Task description", labelStyle: TextStyle(color: Colors.white), hintStyle: TextStyle(color: Colors.white), counterStyle: TextStyle(color: Colors.white))),
                 ),
                 const Divider(),
                 SizedBox(
@@ -168,7 +189,7 @@ class TaskScreenState extends State<TaskScreen> {
                             onPressed: () {
                               _selectDate(context);
                             },
-                            child: Text(selectedDate.day.toString() + "/" + selectedDate.month.toString() + "/" + selectedDate.year.toString())),
+                            child: Text(_dateToString(_getSelectedDate()!))),
                       ],
                     ),
                   ),
@@ -189,7 +210,7 @@ class TaskScreenState extends State<TaskScreen> {
                           onPressed: () {
                             _selectHour(context);
                           },
-                          child: Text(_hourToString(selectedHour))),
+                          child: Text(_hourToString(_getSelectedHour()!))),
                     ],
                   ),
                 ),
@@ -224,11 +245,11 @@ class TaskScreenState extends State<TaskScreen> {
                       ElevatedButton(
                           onPressed: () {
                             setState(() {
-                              reminder = !reminder!;
+                              reminder = !_getReminderValue()!;
                               debugPrint("Reminder selection: " + reminder.toString());
                             });
                           },
-                          child: Text(_boolToYesNo(reminder))),
+                          child: Text(_boolToYesNo(_getReminderValue()))),
                     ],
                   ),
                 ),
@@ -243,7 +264,6 @@ class TaskScreenState extends State<TaskScreen> {
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: [],
                   ),
                 ),
                 const Divider(),
@@ -255,11 +275,15 @@ class TaskScreenState extends State<TaskScreen> {
                   title: const Text(
                     'Reward',
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton(onPressed: () {}, child: Text("3/5")),
-                    ],
+                  trailing: ScoreSelection(
+                    startingScore: score,
+                    formKey: _formKey,
+                    onChange: (int val) {
+                      setState(() {
+                        updateScore(val);
+                        debugPrint("score selected for task:" + score.toString());
+                      });
+                    },
                   ),
                 ),
                 const Divider(),
@@ -291,7 +315,7 @@ class TaskScreenState extends State<TaskScreen> {
                           setState(() {
                             " > New task form validated!";
                             //TODO: distinguish mode modify and create
-                            createNewTask(taskName!, taskDescription!, Category(name: "place", emoji: "🏠"), User(name: "placeholder"));
+                            createNewTask(taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!,_getSelectedHour()!, score, User(name: "placeholder_user"));
                             // TODO: animation of new task created (?)
                             _resetTaskForm();
                           });
@@ -319,7 +343,7 @@ class TaskScreenState extends State<TaskScreen> {
   }
 
   String _hourToString(TimeOfDay selectedHour) {
-    if (selectedHour.minute > 10) {
+    if (selectedHour.minute >= 10) {
       return selectedHour.hour.toString() + ":" + selectedHour.minute.toString();
     } else {
       return selectedHour.hour.toString() + ":0" + selectedHour.minute.toString();
@@ -338,23 +362,62 @@ class TaskScreenState extends State<TaskScreen> {
     taskName = null;
     taskDescription = null;
     taskCategory = null;
-    selectedDate = DateTime.now();
-    selectedHour = TimeOfDay.now();
+    selectedDate = null;
+    selectedHour = null;
     reminder = false;
-    score = null;
+    score = 3;
+  }
+
+  bool? _getReminderValue() {
+    if (reminder == null) {
+      return startingReminder;
+    } else {
+      return reminder;
+    }
+  }
+
+  TimeOfDay? _getSelectedHour() {
+    if (selectedHour == null) {
+      return startingSelectedHour;
+    } else {
+      return selectedHour;
+    }
+  }
+
+  DateTime? _getSelectedDate() {
+    if (selectedDate == null) {
+      return startingSelectedDate;
+    } else {
+      return selectedDate;
+    }
+  }
+
+  String _dateToString(DateTime date) {
+    return date.day.toString() + "/" + date.month.toString() + "/" + date.year.toString();
+  }
+
+  Category? _getSelectedCategory() {
+    if (taskCategory == null) {
+      return startingTaskCategory;
+    } else {
+      return taskCategory;
+    }
   }
 }
 
 class CategoryDropDownSelector extends StatefulWidget {
-  const CategoryDropDownSelector({Key? key}) : super(key: key);
+  CategoryDropDownSelector({Key? key, required this.selectedCategory, required this.onChange}) : super(key: key);
+
+  Category selectedCategory;
+  final categoryCallback onChange;
 
   @override
   State<CategoryDropDownSelector> createState() => CategoryDropDownSelectorState();
 }
 
-class CategoryDropDownSelectorState extends State<CategoryDropDownSelector> {
-  Category? selectedCategory = globals.categories[0];
+typedef void categoryCallback(Category val);
 
+class CategoryDropDownSelectorState extends State<CategoryDropDownSelector> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -368,11 +431,12 @@ class CategoryDropDownSelectorState extends State<CategoryDropDownSelector> {
           padding: const EdgeInsets.only(left: 10),
           child: DropdownButton<String>(
               style: const TextStyle(color: Colors.black),
-              value: serializeCategory(selectedCategory!),
+              value: serializeCategory(widget.selectedCategory),
               icon: const Icon(Icons.arrow_drop_down),
               onChanged: (String? newValue) {
                 setState(() {
-                  selectedCategory = decodeSerializedCategory(newValue!);
+                  widget.selectedCategory = decodeSerializedCategory(newValue!);
+                  widget.onChange(decodeSerializedCategory(newValue));
                 });
               },
               items: selectedTimeIntervalDropdownItems),
