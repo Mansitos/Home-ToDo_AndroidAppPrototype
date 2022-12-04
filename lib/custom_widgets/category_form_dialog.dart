@@ -39,19 +39,20 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
             child: Column(
               children: [
                 TextFormField(
-                  style: const TextStyle(fontSize: 40),
+                  style: const TextStyle(fontSize: 55),
                   initialValue: (() {
                     if (widget.modifyMode == true) {
                       return oldCategoryEmoji;
                     } else {
-                      return '🚩';
+                      return '';
                     }
-                    ;
                   }()),
                   maxLength: 1,
                   decoration: const InputDecoration(
                     hintText: 'Type an emoji to use as icon!',
                     labelText: 'Category Icon',
+                    labelStyle: TextStyle(fontSize: 16),
+                    hintStyle: TextStyle(fontSize: 16, color: Colors.black45),
                   ),
                   onSaved: (String? value) {
                     setState(() {});
@@ -75,18 +76,20 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                   },
                 ),
                 TextFormField(
+                  style: TextStyle(fontSize: 18),
                   maxLength: 20,
                   initialValue: (() {
                     if (widget.modifyMode == true) {
                       return oldCategoryName;
                     } else {
-                      return 'New category';
+                      return '';
                     }
-                    ;
                   }()),
                   decoration: const InputDecoration(
                     hintText: 'What\' the category name?',
                     labelText: 'Category name',
+                    labelStyle: TextStyle(fontSize: 16),
+                    hintStyle: TextStyle(fontSize: 16, color: Colors.black45),
                   ),
                   onSaved: (String? value) {
                     setState(() {});
@@ -111,42 +114,54 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
         );
       }),
       actions: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            FloatingActionButton(
-              heroTag: "UndoCategory",
-              onPressed: () {
-                setState(() {
-                  debugPrint("Undo category creation/modify button pressed!");
-                  Navigator.of(context).pop();
-                });
-              },
-              tooltip: "Cancel",
-              child: const Icon(Icons.cancel),
-            ),
-            FloatingActionButton(
-              heroTag: "ConfirmCategory",
-              onPressed: () {
-                setState(() {
-                  debugPrint("Confirm category creation/modify button pressed!");
-                  if (_formKey.currentState!.validate()) {
-                    debugPrint("Ok! Valid category form!");
-                    if (widget.modifyMode == false) {
-                      createNewCategory(categoryName, categoryEmoji);
-                    } else {
-                      modifyCategory(widget.modifyIndex, categoryName, categoryEmoji);
-                    }
-                    Navigator.of(context).pop();
-                  } else {
-                    debugPrint("Error! Validation failed in category creation form!");
-                  }
-                });
-              },
-              tooltip: "Confirm",
-              child: const Icon(Icons.add),
-            ),
-          ],
+        Padding(
+          padding: const EdgeInsets.all(2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: FloatingActionButton(
+                  backgroundColor: Colors.redAccent,
+                  heroTag: "UndoCategory",
+                  onPressed: () {
+                    setState(() {
+                      debugPrint("Undo category creation/modify button pressed!");
+                      Navigator.of(context).pop();
+                    });
+                  },
+                  tooltip: "Cancel",
+                  child: const Icon(
+                    Icons.cancel,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: FloatingActionButton(
+                  heroTag: "ConfirmCategory",
+                  onPressed: () {
+                    setState(() {
+                      debugPrint("Confirm category creation/modify button pressed!");
+                      if (_formKey.currentState!.validate()) {
+                        debugPrint("Ok! Valid category form!");
+                        if (widget.modifyMode == false) {
+                          createNewCategory(categoryName, categoryEmoji);
+                        } else {
+                          modifyCategory(widget.modifyIndex, categoryName, categoryEmoji);
+                        }
+                        Navigator.of(context).pop();
+                      } else {
+                        debugPrint("Error! Validation failed in category creation form!");
+                      }
+                    });
+                  },
+                  tooltip: "Confirm",
+                  child: const Icon(Icons.check),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

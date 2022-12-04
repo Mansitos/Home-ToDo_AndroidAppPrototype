@@ -137,8 +137,8 @@ class CategoriesGridVisualizerState extends State<CategoriesGridVisualizer> {
                                 value: 0,
                                 child: Row(
                                   children: const <Widget>[
-                                    Icon(Icons.delete),
-                                    Text("Delete"),
+                                    Icon(Icons.delete, color: Colors.red,),
+                                    Text("Delete", style: TextStyle(color: Colors.red),),
                                   ],
                                 ),
                               ),
@@ -159,7 +159,7 @@ class CategoriesGridVisualizerState extends State<CategoriesGridVisualizer> {
                                 value: 1,
                                 child: Row(
                                   children: const <Widget>[
-                                    Icon(Icons.eleven_mp),
+                                    Icon(Icons.edit),
                                     Text("Modify"),
                                   ],
                                 ),

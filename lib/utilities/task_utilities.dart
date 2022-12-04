@@ -14,11 +14,12 @@ Future<void> createNewTask(String name, String desc, Category cat, DateTime date
   await globals.tasksStorage.saveTasksToFile(globals.tasks);
 }
 
-Future<void> modifyTask(int index, String name, String desc, Category cat, DateTime date, TimeOfDay hour, int score, User user) async {
+Future<void> modifyTask(Task task, String name, String desc, Category cat, DateTime date, TimeOfDay hour, int score, User user) async {
   Task modifiedTask = Task(name: name, description: desc, category: cat, dateLimit: date, timeLimit: hour, score: score, user: user);
 
-  debugPrint("\n > Modify task with index " + index.toString());
-  globals.tasks[index] = modifiedTask;
+  debugPrint("\n > Modify task with ID " + task.getID().toString());
+  int index = getIndexOfTaskByID(task.getID()); // get list index where to overwrite...
+  globals.tasks[index] = modifiedTask; // overwrite...
   debugPrint("Now tasks are: " + globals.tasks.toString());
   globals.tasksStorage.saveTasksToFile(globals.tasks);
 }
@@ -35,24 +36,55 @@ Future<void> deleteTaskByID(int id) async {
   globals.tasksStorage.saveTasksToFile(globals.tasks);
 }
 
+int getIndexOfTaskByID(int id){
+  for (var i = globals.tasks.length-1; i>=0; i--){
+    if(globals.tasks[i].getID() == id){
+      return i;
+    }
+  }
+  return -1;
+}
+
 Task decodeSerializedTask(String encode) {
   List<String> data = encode.split(';');
   String name = data[0];
   String desc = data[1];
-  // date and hours TODO
+  DateTime date = decodeDate(data[2]);
+  TimeOfDay time = decodeTime(data[3]);
   Category cat = decodeSerializedCategory(data[4]);
   int score = int.parse(data[5]);
   User user = User(name: "temp"); // TODO decode and encode user data type
 
-  return Task(name: name, description: desc, category: cat, score: score, user: user);
+  return Task(name: name, description: desc, dateLimit: date, timeLimit: time, category: cat, score: score, user: user);
 }
 
 String serializeTask(Task task) {
   String sep = ';';
-  String encoded_date = "date"; // TODO
-  String encoded_hour = "hour"; // TODO
-  String encoded_cat = serializeCategory(task.category);
-  String encoded_score = task.score.toString();
-  String encoded_user = "user"; // TODO
-  return task.name + sep + task.description + sep + encoded_date + sep + encoded_hour + sep + encoded_cat + sep + encoded_score + sep + encoded_user;
+  String encodedDate = encodeDate(task.dateLimit);
+  String encodedHour = encodeTime(task.timeLimit);
+  String encodedCat = serializeCategory(task.category);
+  String encodedScore = task.score.toString();
+  String encodedUser = "user"; // TODO
+  return task.name + sep + task.description + sep + encodedDate + sep + encodedHour + sep + encodedCat + sep + encodedScore + sep + encodedUser;
+}
+
+String encodeDate(DateTime date){
+
+  return date.toString();
+}
+
+String encodeTime(TimeOfDay time){
+  String encode = time.hour.toString() + "-" + time.minute.toString();
+  return encode;
+}
+
+DateTime decodeDate(String encode){
+  DateTime date = DateTime.parse(encode);
+  return date;
+}
+
+TimeOfDay decodeTime(String encode){
+  List<String> data = encode.split('-');
+  return TimeOfDay(hour: int.parse(data[0]), minute: int.parse(data[1]));
+
 }

@@ -9,3 +9,5 @@ List<Category> categories = [];
 final TasksStorage tasksStorage = TasksStorage();
 List<Task> tasks = [];
 int lastUniqueGeneratedID = -1;
+
+bool debugMode = true;

@@ -1,15 +1,20 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/score_selection_widget.dart';
 import 'package:home_to_do/data_types/category.dart';
+import 'package:home_to_do/data_types/task.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 import 'package:home_to_do/utilities/task_utilities.dart';
 
 class TaskScreen extends StatefulWidget {
-  String? mode;
+  TaskScreen({Key? key, this.mode, this.taskToModify}) : super(key: key);
 
-  TaskScreen({Key? key, this.mode}) : super(key: key);
+  String? mode;
+  Task? taskToModify;
 
   @override
   State<TaskScreen> createState() => TaskScreenState();
@@ -20,6 +25,7 @@ class TaskScreenState extends State<TaskScreen> {
   DateTime startingSelectedDate = DateTime.now();
   TimeOfDay startingSelectedHour = TimeOfDay.now();
   bool startingReminder = false;
+  int startingScore = 3;
 
   String? taskName;
   String? taskDescription;
@@ -27,7 +33,7 @@ class TaskScreenState extends State<TaskScreen> {
   DateTime? selectedDate;
   TimeOfDay? selectedHour;
   bool? reminder;
-  int score = 3; // the value is the default one
+  int? score; // the value is the default one
 
   void updateScore(int newScore) {
     setState(() {
@@ -91,6 +97,10 @@ class TaskScreenState extends State<TaskScreen> {
   @override
   Widget build(BuildContext context) {
     final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+    if (widget.mode == "Modify") {
+      _initializeModifyModeValues(widget.taskToModify!);
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: false, // avoid keyboard to push up widgets
@@ -276,7 +286,7 @@ class TaskScreenState extends State<TaskScreen> {
                     'Reward',
                   ),
                   trailing: ScoreSelection(
-                    startingScore: score,
+                    startingScore: _getSelectedScore()!,
                     formKey: _formKey,
                     onChange: (int val) {
                       setState(() {
@@ -301,6 +311,7 @@ class TaskScreenState extends State<TaskScreen> {
                         backgroundColor: Colors.redAccent,
                         onPressed: () {
                           debugPrint(" > Cancel New/Modify_Task button pressed!");
+                          Navigator.of(context).pop();
                         },
                         tooltip: "Cancel",
                         child: const Icon(Icons.cancel),
@@ -313,9 +324,71 @@ class TaskScreenState extends State<TaskScreen> {
                         debugPrint(" > Confirm New/Modify_Task button pressed!");
                         if (_formKey.currentState!.validate()) {
                           setState(() {
-                            " > New task form validated!";
-                            //TODO: distinguish mode modify and create
-                            createNewTask(taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!,_getSelectedHour()!, score, User(name: "placeholder_user"));
+                            if (widget.mode == "Add") {
+                              createNewTask(taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, User(name: "placeholder_user"));
+                            }
+
+                            Timer? _timer;
+                            int _autoCloseTimer = 1;
+
+                            if (widget.mode == "Add") {
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    _timer = Timer(Duration(seconds: _autoCloseTimer), () {
+                                      Navigator.of(context).pop();
+                                      Navigator.of(context).pop();
+                                    });
+                                    return AlertDialog(
+                                      title: Center(
+                                          child: Text(
+                                        _getRandomConfirmationEmoji() + " Task created!",
+                                        style: TextStyle(fontSize: 20),
+                                      )),
+                                    );
+                                  }).then((val){
+                                if (_timer!.isActive) {
+                                  _timer!.cancel();
+                                }
+                              });
+                            } else if (widget.mode == "Modify") {
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text("🔧 Confirm task changes?"),
+                                      actions: <Widget>[
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: <Widget>[
+                                            FloatingActionButton(
+                                              heroTag: "UndoTaskModify",
+                                              onPressed: () {
+                                                setState(() {
+                                                  debugPrint("Task modify cancelled!");
+                                                  Navigator.of(context).pop();
+                                                });
+                                              },
+                                              tooltip: "Cancel",
+                                              child: const Icon(Icons.cancel),
+                                            ),
+                                            FloatingActionButton(
+                                              heroTag: "ConfirmModify",
+                                              onPressed: () {
+                                                setState(() {
+                                                  debugPrint("Task modify confirmed!");
+                                                  modifyTask(widget.taskToModify!, taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, User(name: "placeholder_user"));
+                                                });
+                                              },
+                                              tooltip: "Confirm",
+                                              child: const Icon(Icons.add),
+                                            ),
+                                          ],
+                                        ),],
+                                    );
+                                  });
+                            }
+
                             // TODO: animation of new task created (?)
                             _resetTaskForm();
                           });
@@ -402,6 +475,29 @@ class TaskScreenState extends State<TaskScreen> {
     } else {
       return taskCategory;
     }
+  }
+
+  void _initializeModifyModeValues(Task task) {
+    taskName = task.name;
+    taskDescription = task.description;
+    startingTaskCategory = task.category;
+    startingSelectedDate = task.dateLimit;
+    startingSelectedHour = task.timeLimit;
+    startingReminder = false;
+    startingScore = task.score;
+  }
+
+  int? _getSelectedScore() {
+    if (score == null) {
+      return startingScore;
+    } else {
+      return score;
+    }
+  }
+
+  String _getRandomConfirmationEmoji() {
+    List<String> confirmationEmojis = ["🚀", "🫡", "👌", "👍", "🎉", "⚡", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"];
+    return confirmationEmojis[Random().nextInt(confirmationEmojis.length)];
   }
 }
 

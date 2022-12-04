@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/data_types/task.dart';
-import 'package:home_to_do/utilities/globals.dart';
+import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/utilities/task_utilities.dart' as tasks;
+import 'package:home_to_do/utilities/globals.dart' as globals;
 
 class TaskTileWidget extends StatefulWidget {
   const TaskTileWidget({Key? key, required this.task, required this.onChange}) : super(key: key);
@@ -49,12 +50,12 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                     onTap: () {
                       tasks.deleteTaskByID(widget.task.getID()).then((_) => setState(() {}));
                       widget.onChange();
-                      },
+                    },
                     value: 0,
                     child: Row(
                       children: const <Widget>[
-                        Icon(Icons.delete),
-                        Text("Delete"),
+                        Icon(Icons.delete, color: Colors.red,),
+                        Text("Delete", style: TextStyle(color: Colors.red),),
                       ],
                     ),
                   ),
@@ -63,13 +64,15 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                       // Navigator.pop close the pop-up while showing the dialog.
                       // We have to wait till the animations finish, and then open the dialog.
                       WidgetsBinding.instance?.addPostFrameCallback((_) {
-                        setState(() {});
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => TaskScreen(mode: "Modify", taskToModify: widget.task))).then((value) => setState(() {
+                              widget.onChange();
+                            }));
                       });
                     },
                     value: 1,
                     child: Row(
                       children: const <Widget>[
-                        Icon(Icons.eleven_mp),
+                        Icon(Icons.edit),
                         Text("Modify"),
                       ],
                     ),
@@ -83,9 +86,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
               Checkbox(
                   value: selected,
                   onChanged: (bool? value) {
-                    setState(() {
-                      print(value.toString());
-                    });
+                    setState(() {});
                   }),
               Expanded(
                 child: Padding(
@@ -98,7 +99,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                         style: const TextStyle(fontSize: 15),
                       ),
                       Text(
-                        widget.task.description,
+                        _getTaskTileDescriptionText(),
                         style: const TextStyle(fontSize: 10),
                       ),
                     ],
@@ -123,5 +124,15 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
         ),
       ),
     );
+  }
+
+  String _getTaskTileDescriptionText() {
+    if(globals.debugMode == false){
+      return widget.task.description;
+    }else{
+      // So variables can be seen at run-time.....
+      return ">> DEBUG MODE <<\n"+ widget.task.toString();
+    }
+
   }
 }
