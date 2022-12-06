@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/category_form_dialog.dart';
+import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/data_types/category.dart';
 import '/utilities/globals.dart' as globals;
 import '/utilities/categories_utilities.dart' as categories;
@@ -132,13 +135,64 @@ class CategoriesGridVisualizerState extends State<CategoriesGridVisualizer> {
                             items: <PopupMenuEntry>[
                               PopupMenuItem(
                                 onTap: () {
-                                  categories.deleteCategory(index + 1).then((_) => setState(() {}));
+                                  // Navigator.pop close the pop-up while showing the dialog.
+                                  // We have to wait till the animations finish, and then open the dialog.
+                                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+
+                                          return AlertDialog(
+                                            title: const Text("🔥 Confirm category delete?"),
+                                            content: const Text("Tasks from this category will be moved to default category \"🏠 All\".\nYou can't undo this operation"),
+                                            actions: <Widget>[
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: <Widget>[
+                                                    FloatingActionButton(
+                                                      heroTag: "UndoCategoryDelete",
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          debugPrint("Category delete cancelled!");
+                                                          Navigator.of(context).pop();
+                                                        });
+                                                      },
+                                                      tooltip: "Cancel",
+                                                      child: const Icon(Icons.cancel),
+                                                    ),
+                                                    FloatingActionButton(
+                                                      heroTag: "ConfirmDelete",
+                                                      backgroundColor: Colors.redAccent,
+                                                      onPressed: () {
+                                                        debugPrint("Category Delete confirmed!");
+                                                        categories.deleteCategory(index + 1).then((_) => setState(() {}));
+                                                        Navigator.of(context).pop();
+                                                        showPopUpMessage(context, "💣 Category deleted!",null);
+                                                      },
+                                                      tooltip: "Confirm",
+                                                      child: const Icon(Icons.delete),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        });
+                                  });
                                 },
                                 value: 0,
                                 child: Row(
                                   children: const <Widget>[
-                                    Icon(Icons.delete, color: Colors.red,),
-                                    Text("Delete", style: TextStyle(color: Colors.red),),
+                                    Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    Text(
+                                      "Delete",
+                                      style: TextStyle(color: Colors.red),
+                                    ),
                                   ],
                                 ),
                               ),

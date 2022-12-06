@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/custom_widgets/score_selection_widget.dart';
 import 'package:home_to_do/data_types/category.dart';
 import 'package:home_to_do/data_types/task.dart';
@@ -323,42 +324,23 @@ class TaskScreenState extends State<TaskScreen> {
                       onPressed: () {
                         debugPrint(" > Confirm New/Modify_Task button pressed!");
                         if (_formKey.currentState!.validate()) {
-                          setState(() {
-                            if (widget.mode == "Add") {
+                          if (widget.mode == "Add") {
+                            setState(() {
                               createNewTask(taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, User(name: "placeholder_user"));
-                            }
-
-                            Timer? _timer;
-                            int _autoCloseTimer = 1;
-
-                            if (widget.mode == "Add") {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    _timer = Timer(Duration(seconds: _autoCloseTimer), () {
-                                      Navigator.of(context).pop();
-                                      Navigator.of(context).pop();
-                                    });
-                                    return AlertDialog(
-                                      title: Center(
-                                          child: Text(
-                                        _getRandomConfirmationEmoji() + " Task created!",
-                                        style: TextStyle(fontSize: 20),
-                                      )),
-                                    );
-                                  }).then((val){
-                                if (_timer!.isActive) {
-                                  _timer!.cancel();
-                                }
-                              });
-                            } else if (widget.mode == "Modify") {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text("🔧 Confirm task changes?"),
-                                      actions: <Widget>[
-                                        Row(
+                            });
+                          }
+                          if (widget.mode == "Add") {
+                            showPopUpMessage(context, _getRandomConfirmationEmoji() + " Task created!", null, additionalPops:1);
+                          } else if (widget.mode == "Modify") {
+                            showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text("📝 Confirm task changes?"),
+                                    actions: <Widget>[
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: <Widget>[
                                             FloatingActionButton(
@@ -370,28 +352,29 @@ class TaskScreenState extends State<TaskScreen> {
                                                 });
                                               },
                                               tooltip: "Cancel",
+                                              backgroundColor: Colors.redAccent,
                                               child: const Icon(Icons.cancel),
                                             ),
                                             FloatingActionButton(
                                               heroTag: "ConfirmModify",
                                               onPressed: () {
-                                                setState(() {
-                                                  debugPrint("Task modify confirmed!");
-                                                  modifyTask(widget.taskToModify!, taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, User(name: "placeholder_user"));
-                                                });
+                                                debugPrint("Task modify confirmed!");
+                                                modifyTask(widget.taskToModify!, taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, User(name: "placeholder_user"));
+                                                Navigator.of(context).pop();
+                                                showPopUpMessage(context, "✅ Task modified!", null, additionalPops:1);
                                               },
                                               tooltip: "Confirm",
-                                              child: const Icon(Icons.add),
+                                              child: const Icon(Icons.check),
                                             ),
                                           ],
-                                        ),],
-                                    );
-                                  });
-                            }
-
-                            // TODO: animation of new task created (?)
-                            _resetTaskForm();
-                          });
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                });
+                          }
+                          //_resetTaskForm();
+                          ;
                         }
                       },
                       tooltip: "Confirm",
@@ -496,7 +479,7 @@ class TaskScreenState extends State<TaskScreen> {
   }
 
   String _getRandomConfirmationEmoji() {
-    List<String> confirmationEmojis = ["🚀", "🫡", "👌", "👍", "🎉", "⚡", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"];
+    List<String> confirmationEmojis = ["🚀", "👌", "👍", "🎉", "⚡", "✅", "✅", "✅", "✅", "✅"];
     return confirmationEmojis[Random().nextInt(confirmationEmojis.length)];
   }
 }

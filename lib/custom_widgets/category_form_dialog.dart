@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 
@@ -146,11 +149,14 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                       if (_formKey.currentState!.validate()) {
                         debugPrint("Ok! Valid category form!");
                         if (widget.modifyMode == false) {
+                          Navigator.of(context).pop();
                           createNewCategory(categoryName, categoryEmoji);
+                          showPopUpMessage(context,"✅ Category created!",null);
                         } else {
+                          Navigator.of(context).pop();
                           modifyCategory(widget.modifyIndex, categoryName, categoryEmoji);
+                          showPopUpMessage(context,"✅ Category modified!",null);
                         }
-                        Navigator.of(context).pop();
                       } else {
                         debugPrint("Error! Validation failed in category creation form!");
                       }

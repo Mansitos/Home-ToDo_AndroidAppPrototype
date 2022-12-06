@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:home_to_do/data_types/global_settings.dart';
 import 'package:home_to_do/pages/search_page.dart';
 import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/pages/users_page.dart';
 import 'package:home_to_do/pages/categories_page.dart';
 import 'custom_widgets/category_horizontal_list_view.dart';
+import 'custom_widgets/pop_up_message.dart';
 import 'custom_widgets/task_tile.dart';
 import 'custom_widgets/user_selection_dropup.dart';
 import 'data_types/category.dart';
@@ -21,8 +25,12 @@ Future<void> main() async {
 Future<bool> initializeApplicationVariables() async {
   // Load categories and tasks from file
   await globals.categoriesStorage.loadCategoriesFromFile();
-  await globals.tasksStorage.loadTasksIDFromFile();
   await globals.tasksStorage.loadTasksFromFile();
+  // Load global application variables
+  await globals.globalSettingsStorage.loadGlobalSettingsFromFile();
+
+  print(globals.lastUniqueGeneratedID);
+  print(globals.popUpMessagesEnabled);
 
   // TODO: THINGS TO REMOVE IN PRODUCTION!
   if (false) {
@@ -153,51 +161,274 @@ class MainScreenState extends State<MainScreen> {
                     'Home To-Do',
                     style: TextStyle(fontSize: 35),
                   ),
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      image: new DecorationImage(
-                        image: AssetImage("./lib/assets/logo.png"),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+                  Expanded(
+                    child: Container(child: Image.asset("lib/assets/logo.png")),
+                  )
                 ],
               ),
             ),
             ListTile(
               title: const Text('ℹ️ About the app'), // Todo: alert dialog with info about app
               onTap: () {
-                setState(() {
-                  Navigator.pop(context);
+                // Navigator.pop close the pop-up while showing the dialog.
+                // We have to wait till the animations finish, and then open the dialog.
+                WidgetsBinding.instance?.addPostFrameCallback((_) {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Column(
+                            children: [
+                              const Text("About the App"),
+                            ],
+                          ),
+                          content: const Text('This app was developed by Andrea Mansi for the university exam "Sviluppo di Applicazioni Mobili/Mobile Apps Development".\n\n🏛️ University of Udine 🇮🇹 Italy\nMaster\'s degree in Computer Science\nCurricula: Big-Data Analytics.\n\nThis is my first mobile application project and my first code in Dart+Flutter.\n\nPlease expect to find lots of bugs! 😝', textAlign: TextAlign.center),
+                          actions: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: <Widget>[
+                                  FloatingActionButton(
+                                    heroTag: "Back",
+                                    onPressed: () {
+                                      setState(() {
+                                        Navigator.of(context).pop();
+                                      });
+                                    },
+                                    tooltip: "Back",
+                                    child: const Icon(Icons.check),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      });
                 });
               },
             ),
+            Divider(),
             ListTile(
               title: const Text('🔥 Wipe all data'),
               onTap: () {
-                setState(() {
-                  Navigator.pop(context); // Todo: alert dialog with confirm, if true, delete tasks, categories, users... everything!
+                // Navigator.pop close the pop-up while showing the dialog.
+                // We have to wait till the animations finish, and then open the dialog.
+                WidgetsBinding.instance?.addPostFrameCallback((_) {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Column(
+                            children: [
+                              Text(
+                                "☠",
+                                style: TextStyle(fontSize: 60),
+                              ),
+                              Text(
+                                "Are you sure you want to wipe all data?",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              Text(
+                                "You can't undo this operation!",
+                                style: TextStyle(color: Colors.red),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                          actions: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  FloatingActionButton(
+                                    heroTag: "UndoDataWipe",
+                                    onPressed: () {
+                                      setState(() {
+                                        debugPrint("Wipe data cancelled!");
+                                        Navigator.of(context).pop();
+                                      });
+                                    },
+                                    tooltip: "Wipe All Data",
+                                    child: const Icon(Icons.cancel),
+                                  ),
+                                  FloatingActionButton(
+                                    heroTag: "ConfirmDataWipe",
+                                    backgroundColor: Colors.redAccent,
+                                    onPressed: () async {
+                                      debugPrint("Data Wipe confirmed!");
+                                      await _wipeAllData();
+                                      Navigator.of(context).pop();
+                                      showPopUpMessage(context, "🚀 Data successfully sent into a black hole!\nIt's gone forever...", 2300);
+                                      rebuildMainScreen();
+                                    },
+                                    tooltip: "Confirm",
+                                    child: const Icon(Icons.delete),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      });
                 });
               },
             ),
+            Divider(),
             ListTile(
-              title: const Text('⭐ Vote App on the app store'), // TODO: go to play store page
+              title: const Text('⭐ Rate on the app store'), // TODO: go to play store page
               onTap: () {
-                setState(() {
-                  Navigator.pop(context);
+                // Navigator.pop close the pop-up while showing the dialog.
+                // We have to wait till the animations finish, and then open the dialog.
+                WidgetsBinding.instance?.addPostFrameCallback((_) {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Column(
+                            children: [
+                              const Text("Placeholder..."),
+                            ],
+                          ),
+                          content: const Text('This button should bring you to play store so you can rate the app', textAlign: TextAlign.center),
+                          actions: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: <Widget>[
+                                  FloatingActionButton(
+                                    heroTag: "Back",
+                                    onPressed: () {
+                                      setState(() {
+                                        Navigator.of(context).pop();
+                                      });
+                                    },
+                                    tooltip: "Back",
+                                    child: const Icon(Icons.check),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      });
                 });
               },
             ),
+            Divider(),
             ListTile(
               title: const Text('🔧 Application settings'), // TODO: go to android settings page
               onTap: () {
-                setState(() {
-                  Navigator.pop(context);
+                // Navigator.pop close the pop-up while showing the dialog.
+                // We have to wait till the animations finish, and then open the dialog.
+                WidgetsBinding.instance?.addPostFrameCallback((_) {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Column(
+                            children: [
+                              const Text("Placeholder..."),
+                            ],
+                          ),
+                          content: const Text('This button should bring you to the android app-settings for this app...', textAlign: TextAlign.center),
+                          actions: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: <Widget>[
+                                  FloatingActionButton(
+                                    heroTag: "Back",
+                                    onPressed: () {
+                                      setState(() {
+                                        Navigator.of(context).pop();
+                                      });
+                                    },
+                                    tooltip: "Back",
+                                    child: const Icon(Icons.check),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      });
                 });
               },
-            )
+            ),
+            Divider(),
+            ListTile(
+              title: Row(
+                children: [
+                  Text(globals.popUpMessagesEnabled ? '✅  Pop-Up messages enabled' : '❌ Pop-Up messages disabled'),
+                ],
+              ), // TODO: go to play store page
+              onTap: () {
+                // Navigator.pop close the pop-up while showing the dialog.
+                // We have to wait till the animations finish, and then open the dialog.
+                WidgetsBinding.instance?.addPostFrameCallback((_) {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Column(
+                            children: [
+                              const Text("Pop-Up Messages"),
+                            ],
+                          ),
+                          content: const Text('This option enables/disables pop-up messages, like for example:\n\"✅ New task created\".', textAlign: TextAlign.center),
+                          actions: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        globals.popUpMessagesEnabled = false;
+                                        debugPrint("Pop-Up messages disabled");
+                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled));
+                                        Navigator.of(context).pop();
+                                      });
+                                    },
+                                    child: Text(
+                                      globals.popUpMessagesEnabled ? "Disable" : "Keep disabled",
+                                      style: TextStyle(fontSize: 18, color: Colors.black),
+                                    ),
+                                    style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        globals.popUpMessagesEnabled = true;
+                                        debugPrint("Pop-Up messages enabled");
+                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled));
+                                        Navigator.of(context).pop();
+                                      });
+                                    },
+                                    child: Text(
+                                      globals.popUpMessagesEnabled ? "Keep enabled" : "Enable",
+                                      style: TextStyle(fontSize: 18, color: Colors.black),
+                                    ),
+                                    style: TextButton.styleFrom(backgroundColor: Colors.amber),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      });
+                });
+              },
+            ),
+            Divider(),
           ],
         ),
       ),
@@ -223,6 +454,15 @@ class MainScreenState extends State<MainScreen> {
         UserSelectionDropUpWidget(key: userSelectionDropUpKey),
       ]),
     );
+  }
+
+  Future<void> _wipeAllData() async {
+    // Wipe data...
+    await globals.categoriesStorage.saveCategoriesToFile([]);
+    await globals.tasksStorage.saveTasksToFile([]);
+    await globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: 0, popUpMessagesEnabled: true));
+    // Load wiped (re-generated-data) again...
+    await initializeApplicationVariables();
   }
 }
 

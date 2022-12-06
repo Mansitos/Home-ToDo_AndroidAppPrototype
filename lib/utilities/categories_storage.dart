@@ -17,7 +17,18 @@ class CategoriesStorage {
 
   Future<File> get _localCategoriesFile async {
     final path = await _localPath;
-    return File('$path/categories.txt');
+
+    File file = File('$path/categories.txt');
+
+    if (file.existsSync()) {
+      print("exists");
+      return file;
+    } else {
+      debugPrint(" > Creating categories file because it was missing!");
+      file = await File('$path/categories.txt').create(recursive: true);
+      if (file.existsSync()) {}
+    }
+    return file;
   }
 
   Future<File> saveCategoriesToFile(List<Category> categories) async {
@@ -52,7 +63,7 @@ class CategoriesStorage {
         for (var i = 0; i < encodedCategories.length; i++) {
           categories.add(decodeSerializedCategory(encodedCategories[i]));
         }
-      }else{
+      } else {
         categories.add(Category(name: "All", emoji: "🏠"));
         await globals.categoriesStorage.saveCategoriesToFile(categories);
         print(" > Regenerating default category!");

@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/data_types/task.dart';
 import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/utilities/task_utilities.dart' as tasks;
@@ -48,8 +52,53 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                 items: <PopupMenuEntry>[
                   PopupMenuItem(
                     onTap: () {
-                      tasks.deleteTaskByID(widget.task.getID()).then((_) => setState(() {}));
-                      widget.onChange();
+                      // Navigator.pop close the pop-up while showing the dialog.
+                      // We have to wait till the animations finish, and then open the dialog.
+                      WidgetsBinding.instance?.addPostFrameCallback((_) {
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+
+                              return AlertDialog(
+                                title: Text("🔥 Confirm task delete?"),
+                                content: Text("You can't undo this operation!"),
+                                actions: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: <Widget>[
+                                        FloatingActionButton(
+                                          heroTag: "UndoTaskDelete",
+                                          onPressed: () {
+                                            setState(() {
+                                              debugPrint("Task delete cancelled!");
+                                              Navigator.of(context).pop();
+                                            });
+                                          },
+                                          tooltip: "Cancel",
+                                          child: const Icon(Icons.cancel),
+                                        ),
+                                        FloatingActionButton(
+                                          heroTag: "ConfirmDelete",
+                                          backgroundColor: Colors.redAccent,
+                                          onPressed: () {
+                                            debugPrint("Task Delete confirmed!");
+                                            tasks.deleteTaskByID(widget.task.getID()).then((_) => setState(() {}));
+                                            widget.onChange();
+                                            Navigator.of(context).pop();
+                                            showPopUpMessage(context, _getTaskDeleteMessage(),null);
+                                          },
+                                          tooltip: "Confirm",
+                                          child: const Icon(Icons.delete),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              );
+                            });
+                      });
                     },
                     value: 0,
                     child: Row(
@@ -135,4 +184,15 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
     }
 
   }
-}
+
+  String _getTaskDeleteMessage() {
+    List<String> deletionEmojis = ["💣","🔥","☠","👍","🧨","💥","❌","☢","☣"];
+    String defaultDeleteMessage = deletionEmojis[Random().nextInt(deletionEmojis.length)] + " Task deleted!";
+    bool useDefaultMessage = Random().nextBool();
+    List<String> deletionMessages = ["🔥 Task burnt!","☢ Task sent into nuclear reactor!","😺 Task eaten by developers cat!","🐶 Task eaten by a dog!","🚀 Task sent into space!"];
+    if(useDefaultMessage){
+      return defaultDeleteMessage;
+    }else{
+      return deletionMessages[Random().nextInt(deletionMessages.length)];
+  }
+}}

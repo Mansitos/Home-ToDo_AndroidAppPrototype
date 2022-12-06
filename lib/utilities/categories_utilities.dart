@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/data_types/category.dart';
-
+import 'package:home_to_do/data_types/task.dart';
 import 'globals.dart' as globals;
 
 void createNewCategory(String name, String emoji) {
@@ -14,16 +14,33 @@ void createNewCategory(String name, String emoji) {
 Future<void> modifyCategory(int index, String name, String emoji) async {
   Category modified = Category(name: name, emoji: emoji);
   debugPrint("\n > Modify class with index " + index.toString());
+  Category oldCategory = globals.categories[index];
   globals.categories[index] = modified;
   debugPrint("Now categories are: " + globals.categories.toString());
   globals.categoriesStorage.saveCategoriesToFile(globals.categories);
+  _updateTaskWithMatchingCategory(oldCategory,modified);
+}
+
+void _updateTaskWithMatchingCategory(Category oldCategory, Category newCategory) {
+  List<Task> tasks = globals.tasks;
+  int count = 0;
+  for(int i = 0;i<=tasks.length-1;i++){
+    Task task = tasks[i];
+    if(task.category.toString() == oldCategory.toString()){
+      count++;
+      task.category = newCategory;
+    }
+  }
+  debugPrint(" > "+count.toString()+ " tasks modified due to category modify process.");
 }
 
 Future<void> deleteCategory(int index) async {
   debugPrint("\n > Delete class with index " + index.toString());
+  Category oldCategory = globals.categories[index];
   globals.categories.removeAt(index);
   debugPrint("Now categories are: " + globals.categories.toString());
   globals.categoriesStorage.saveCategoriesToFile(globals.categories);
+  _updateTaskWithMatchingCategory(oldCategory,globals.categories[0]);
 }
 
 Category decodeSerializedCategory(String encode) {

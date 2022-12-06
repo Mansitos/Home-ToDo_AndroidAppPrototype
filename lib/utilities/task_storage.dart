@@ -17,7 +17,18 @@ class TasksStorage {
 
   Future<File> get _localTasksFile async {
     final path = await _localPath;
-    return File('$path/tasks.txt');
+
+    File file = File('$path/tasks.txt');
+
+    if (file.existsSync()) {
+      return file;
+    } else {
+      debugPrint(" > Creating tasks file because it was missing!");
+      file = await File('$path/tasks.txt').create(recursive: true);
+      if (file.existsSync()) {}
+    }
+
+    return file;
   }
 
   Future<File> saveTasksToFile(List<Task> tasks) async {
@@ -48,8 +59,10 @@ class TasksStorage {
       List<String> encodedTasks = contents.split('|');
       List<Task> tasks = [];
 
-      for (var i = 0; i < encodedTasks.length; i++) {
-        tasks.add(decodeSerializedTask(encodedTasks[i]));
+      if(contents != "") {
+        for (var i = 0; i < encodedTasks.length; i++) {
+          tasks.add(decodeSerializedTask(encodedTasks[i]));
+        }
       }
 
       // Updating globals entry
@@ -60,27 +73,6 @@ class TasksStorage {
     } catch (e) {
       debugPrint(" > Error in loading tasks file!");
       debugPrint(e.toString());
-      return false;
-    }
-  }
-
-  Future<File> get _localTasksIDFile async {
-    final path = await _localPath;
-    return File('$path/tasks_ID.txt');
-  }
-
-  Future<File> saveTasksIDToFile(int id) async {
-    final file = await _localTasksIDFile;
-    return file.writeAsString(id.toString());
-  }
-
-  Future<bool> loadTasksIDFromFile() async {
-    try {
-      final file = await _localTasksIDFile;
-      final id = await file.readAsString();
-      globals.lastUniqueGeneratedID = int.parse(id);
-      return true;
-    } catch (e) {
       return false;
     }
   }
