@@ -53,7 +53,7 @@ String serializeCategory(Category category) {
   return category.emoji + " " + category.name;
 }
 
-bool checkIfAvailable(String name, String emoji, String mask, bool maskMode) {
+bool checkIfCategoryNameAvailable(String name, String emoji, String mask, bool maskMode) {
   for (var i = 0; i < globals.categories.length; i++) {
     if (maskMode == true) {
       if (name != mask && emoji != mask) {

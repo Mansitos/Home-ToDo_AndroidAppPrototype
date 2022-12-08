@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
@@ -70,7 +68,7 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                       return 'Please enter an emoji!';
                     } else if (!REGEX_EMOJI.hasMatch(value)) {
                       return 'Only emoji are allowed!';
-                    } else if (!checkIfAvailable("", value, oldCategoryEmoji, widget.modifyMode)) {
+                    } else if (!checkIfCategoryNameAvailable("", value, oldCategoryEmoji, widget.modifyMode)) {
                       return 'Emoji already used!';
                     } else {
                       categoryEmoji = value;
@@ -89,7 +87,7 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                     }
                   }()),
                   decoration: const InputDecoration(
-                    hintText: 'What\' the category name?',
+                    hintText: 'What\'s the category name?',
                     labelText: 'Category name',
                     labelStyle: TextStyle(fontSize: 16),
                     hintStyle: TextStyle(fontSize: 16, color: Colors.black45),
@@ -103,7 +101,7 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                       return 'Please enter some text!';
                     } else if (!validCharacters.hasMatch(value)) {
                       return 'Invalid characters!';
-                    } else if (!checkIfAvailable(value, "", oldCategoryName, widget.modifyMode)) {
+                    } else if (!checkIfCategoryNameAvailable(value, "", oldCategoryName, widget.modifyMode)) {
                       return 'Name already used!';
                     } else {
                       categoryName = value;

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/custom_widgets/score_selection_widget.dart';
@@ -10,6 +9,7 @@ import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 import 'package:home_to_do/utilities/task_utilities.dart';
+import 'package:home_to_do/utilities/users_utilities.dart';
 
 class TaskScreen extends StatefulWidget {
   TaskScreen({Key? key, this.mode, this.taskToModify}) : super(key: key);
@@ -27,6 +27,7 @@ class TaskScreenState extends State<TaskScreen> {
   TimeOfDay startingSelectedHour = TimeOfDay.now();
   bool startingReminder = false;
   int startingScore = 3;
+  User startingUser = globals.users[0];
 
   String? taskName;
   String? taskDescription;
@@ -35,6 +36,7 @@ class TaskScreenState extends State<TaskScreen> {
   TimeOfDay? selectedHour;
   bool? reminder;
   int? score; // the value is the default one
+  User? taskUser;
 
   void updateScore(int newScore) {
     setState(() {
@@ -270,12 +272,15 @@ class TaskScreenState extends State<TaskScreen> {
                     Icons.person,
                     color: Colors.white,
                   ),
-                  title: const Text(
-                    'Luca',
+                  title: DropDownUsers(
+                    onChange: (User val) {
+                      setState(() {
+                        taskUser = val;
+                      });
+                    },
+                    selectedUser: _getSelectedUser()!,
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                  ),
+
                 ),
                 const Divider(),
                 ListTile(
@@ -326,11 +331,11 @@ class TaskScreenState extends State<TaskScreen> {
                         if (_formKey.currentState!.validate()) {
                           if (widget.mode == "Add") {
                             setState(() {
-                              createNewTask(taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, User(name: "placeholder_user"));
+                              createNewTask(taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!);
                             });
                           }
                           if (widget.mode == "Add") {
-                            showPopUpMessage(context, _getRandomConfirmationEmoji() + " Task created!", null, additionalPops:1);
+                            showPopUpMessage(context, _getRandomConfirmationEmoji() + " Task created!", null, additionalPops: 1);
                           } else if (widget.mode == "Modify") {
                             showDialog(
                                 context: context,
@@ -359,9 +364,9 @@ class TaskScreenState extends State<TaskScreen> {
                                               heroTag: "ConfirmModify",
                                               onPressed: () {
                                                 debugPrint("Task modify confirmed!");
-                                                modifyTask(widget.taskToModify!, taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, User(name: "placeholder_user"));
+                                                modifyTask(widget.taskToModify!, taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!);
                                                 Navigator.of(context).pop();
-                                                showPopUpMessage(context, "✅ Task modified!", null, additionalPops:1);
+                                                showPopUpMessage(context, "✅ Task modified!", null, additionalPops: 1);
                                               },
                                               tooltip: "Confirm",
                                               child: const Icon(Icons.check),
@@ -414,21 +419,19 @@ class TaskScreenState extends State<TaskScreen> {
     }
   }
 
-  void _resetTaskForm() {
-    taskName = null;
-    taskDescription = null;
-    taskCategory = null;
-    selectedDate = null;
-    selectedHour = null;
-    reminder = false;
-    score = 3;
-  }
-
   bool? _getReminderValue() {
     if (reminder == null) {
       return startingReminder;
     } else {
       return reminder;
+    }
+  }
+
+  User? _getSelectedUser() {
+    if (taskUser == null) {
+      return startingUser;
+    } else {
+      return taskUser;
     }
   }
 
@@ -466,8 +469,9 @@ class TaskScreenState extends State<TaskScreen> {
     startingTaskCategory = task.category;
     startingSelectedDate = task.dateLimit;
     startingSelectedHour = task.timeLimit;
-    startingReminder = false;
+    startingReminder = false; // TODO: ee
     startingScore = task.score;
+    startingUser = task.user;
   }
 
   int? _getSelectedScore() {
@@ -495,6 +499,7 @@ class CategoryDropDownSelector extends StatefulWidget {
 }
 
 typedef void categoryCallback(Category val);
+typedef void userCallback(User val);
 
 class CategoryDropDownSelectorState extends State<CategoryDropDownSelector> {
   @override
@@ -518,21 +523,91 @@ class CategoryDropDownSelectorState extends State<CategoryDropDownSelector> {
                   widget.onChange(decodeSerializedCategory(newValue));
                 });
               },
-              items: selectedTimeIntervalDropdownItems),
+              items: selectedCategoryDropdownItems),
         )),
       ),
     );
   }
 }
 
-List<DropdownMenuItem<String>> get selectedTimeIntervalDropdownItems {
+List<DropdownMenuItem<String>> get selectedCategoryDropdownItems {
   List<DropdownMenuItem<String>> items = [];
 
   if (globals.categories.isNotEmpty) {
     for (var i = 0; i < globals.categories.length; i++) {
       String encoded = serializeCategory(globals.categories[i]);
-      items.add(DropdownMenuItem(child: Text(encoded), value: encoded));
+      items.add(DropdownMenuItem(child: Text(encoded), value: encoded),);
     }
   }
   return items;
+}
+
+List<DropdownMenuItem<String>> selectedUserDropdownItems(Color color) {
+  List<DropdownMenuItem<String>> items = [];
+
+  if (globals.users.isNotEmpty) {
+    for (var i = 0; i < globals.users.length; i++) {
+      String encoded = serializeUser(globals.users[i]);
+      items.add(DropdownMenuItem(
+          child: Text(
+            globals.users[i].name,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: color),
+          ),
+          value: encoded));
+    }
+  }
+  return items;
+}
+
+class DropDownUsers extends StatefulWidget {
+  DropDownUsers({Key? key, required this.selectedUser, required this.onChange}) : super(key: key);
+
+  User selectedUser;
+  final userCallback onChange;
+  Color color = Colors.black;
+
+  @override
+  State<DropDownUsers> createState() => _DropDownUsersState();
+}
+
+class _DropDownUsersState extends State<DropDownUsers> {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text("User"),
+        Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+          color: Colors.white,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 4.0, right: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              DropdownButton<String>(
+                  //dropdownColor: const Color.fromRGBO(42, 42, 42, 1),
+                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                  value: serializeUser(widget.selectedUser),
+                  icon: null,
+                  underline: Container(
+                    height: 0,
+                  ),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      widget.selectedUser = decodeSerializedUser(newValue!);
+                      widget.onChange(decodeSerializedUser(newValue));
+                    });
+                  },
+                  onTap: () {},
+                  items: selectedUserDropdownItems(widget.color)),
+            ],
+          ),
+        ),
+        )],
+    );
+  }
 }

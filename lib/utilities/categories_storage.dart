@@ -21,7 +21,6 @@ class CategoriesStorage {
     File file = File('$path/categories.txt');
 
     if (file.existsSync()) {
-      print("exists");
       return file;
     } else {
       debugPrint(" > Creating categories file because it was missing!");
@@ -33,9 +32,6 @@ class CategoriesStorage {
 
   Future<File> saveCategoriesToFile(List<Category> categories) async {
     final file = await _localCategoriesFile;
-
-    // Updating globals entry TODO: uselsse, remove?
-    // globals.categories = categories;
 
     String encode = "";
     if (categories.isNotEmpty) {
@@ -65,8 +61,8 @@ class CategoriesStorage {
         }
       } else {
         categories.add(Category(name: "All", emoji: "🏠"));
-        await globals.categoriesStorage.saveCategoriesToFile(categories);
         print(" > Regenerating default category!");
+        await globals.categoriesStorage.saveCategoriesToFile(categories);
       }
 
       // Updating globals entry

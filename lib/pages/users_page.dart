@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:home_to_do/custom_widgets/user_form_dialog.dart';
+import 'package:home_to_do/custom_widgets/user_tile.dart';
+import 'package:home_to_do/data_types/user.dart';
+import 'package:home_to_do/utilities/globals.dart' as globals;
 
 class UserScreen extends StatefulWidget {
   UserScreen({Key? key}) : super(key: key);
@@ -22,27 +26,227 @@ class UserScreenState extends State<UserScreen> {
         floatingActionButton: FloatingActionButton(
           heroTag: "AddUser",
           onPressed: () {
-            print("Add user button pressed");
+            // Navigator.pop close the pop-up while showing the dialog.
+            // We have to wait till the animations finish, and then open the dialog.
+            WidgetsBinding.instance?.addPostFrameCallback((_) {
+              setState(() {
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return UserDialogForm(modifyMode: false, modifyIndex: -1);
+                    }).then((_) => setState(() {}));
+              });
+            });
           },
           tooltip: "Create a new user",
           child: const Icon(Icons.add),
         ),
-        body: Container( // PODIUM TEST
-          height: 250,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [Expanded(child: Container()), Expanded(child: Container(child:Center(child: Text("2°",style: TextStyle(color: Colors.black, fontSize: 30),)),height: 70, color: Colors.white)),Expanded(child: Container(child:Center(child: Text("1°",style: TextStyle(color: Colors.black, fontSize: 30),)),height: 150, color: Colors.white)),Expanded(child: Container(child:Center(child: Text("3°",style: TextStyle(color: Colors.black, fontSize: 30),)),height: 110, color: Colors.white)), Expanded(child: Container())],
-          ),
+        body: Column(
+          children: [
+            PodiumWidget(usersList: _getUsersOrderedList()),
+            Divider(color: Colors.white,),
+            _usersListWidgetBuilder(context, () {
+              setState(() {
+                // TODO: rebuild the main page..???
+              });
+            })
+
+          ],
         ));
   }
 }
+
+Widget _usersListWidgetBuilder(context, void Function() callback,) {
+
+  return ListView(
+      shrinkWrap: true,
+      children: usersOrderedTileBuilder(context, callback, _getUsersOrderedList()),
+    );
+}
+
+List<User> _getUsersOrderedList() {
+  int userScoreComparison(User a, User b) {
+    int scoreA = a.score;
+    int scoreB = b.score;
+    print("AAAAA");
+    if (scoreA < scoreB) {
+      return -1;
+    } else if (scoreA > scoreB) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+  List<User> usersOrdered = globals.users.sublist(1);
+  usersOrdered.sort(userScoreComparison);
+  usersOrdered = usersOrdered.reversed.toList();
+  return usersOrdered;
+}
+
+List<Widget> usersOrderedTileBuilder(BuildContext context, void Function() rebuildCallback, List<User> usersOrdered) {
+  List<Widget> userTiles = [];
+
+  for (var i = 0; i < usersOrdered.length; i++) {
+    Widget userTile = UserTileWidget(
+      user: usersOrdered[i],
+      onChange: () {
+        rebuildCallback();
+      },
+    );
+    userTiles.add(userTile);
+  }
+  return userTiles;
+}
+
 
 class AdditionalOptionsPopUpMenu extends StatefulWidget {
   const AdditionalOptionsPopUpMenu({Key? key}) : super(key: key);
 
   @override
   State<AdditionalOptionsPopUpMenu> createState() => AdditionalOptionsPopUpMenuState();
+}
+
+class PodiumWidget extends StatefulWidget {
+  PodiumWidget({Key? key, required this.usersList}) : super(key: key);
+
+  List<User> usersList;
+
+  @override
+  State<PodiumWidget> createState() => PodiumWidgetState();
+}
+
+class PodiumWidgetState extends State<PodiumWidget> {
+  MediaQueryData? queryData;
+  double screenWidth = 0;
+  double screenHeight = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    queryData = MediaQuery.of(context);
+    screenWidth = queryData!.size.width;
+    screenHeight = queryData!.size.height;
+
+    return Column(
+      children: [
+        Container(
+          height: screenHeight * 0.04,
+        ),
+        Text(
+          "🏆 Users Ranking",
+          style: TextStyle(fontSize: 25, color: Colors.white),
+        ),
+        Container(
+            // PODIUM TEST
+            height: screenHeight * 0.28,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(child: Container()),
+                Expanded(
+                    child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      widget.usersList.length >= 2 ? widget.usersList[1].name : "",
+                      style: TextStyle(color: Colors.white, fontSize: 15),
+                    ),
+                    Container(
+                      height: screenHeight * 0.005,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadiusDirectional.only(
+                            topStart: Radius.circular(10),
+                            bottomStart: Radius.circular(5),
+                          )),
+                      child: Center(
+                          child: Column(
+                        children: [
+                          Container(
+                            height: screenHeight * 0.01,
+                          ),
+                          Text(
+                            "2°",
+                            style: TextStyle(color: Colors.black, fontSize: 30),
+                          ),
+                        ],
+                      )),
+                      height: screenHeight * 0.11,
+                    ),
+                  ],
+                )),
+                Expanded(
+                    child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      widget.usersList.length >= 1 ? widget.usersList[0].name : "",
+                      style: TextStyle(color: Colors.white, fontSize: 15),
+                    ),
+                    Container(
+                      height: screenHeight * 0.005,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadiusDirectional.only(
+                            topStart: Radius.circular(10),
+                            topEnd: Radius.circular(10),
+                          )),
+                      child: Center(
+                          child: Column(
+                        children: [
+                          Container(
+                            height: screenHeight * 0.01,
+                          ),
+                          Text(
+                            "1°",
+                            style: TextStyle(color: Colors.black, fontSize: 30),
+                          ),
+                        ],
+                      )),
+                      height: screenHeight * 0.17,
+                    ),
+                  ],
+                )),
+                Expanded(
+                    child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      widget.usersList.length >= 3 ? widget.usersList[2].name : "",
+                      style: TextStyle(color: Colors.white, fontSize: 15),
+                    ),
+                    Container(
+                      height: screenHeight * 0.005,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadiusDirectional.only(topEnd: Radius.circular(10), bottomEnd: Radius.circular(5))),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              height: screenHeight * 0.01,
+                            ),
+                            Text(
+                              "3°",
+                              style: TextStyle(color: Colors.black, fontSize: 30),
+                            ),
+                          ],
+                        ),
+                      ),
+                      height: screenHeight * 0.08,
+                    ),
+                  ],
+                )),
+                Expanded(child: Container())
+              ],
+            )),
+      Container(height: screenHeight * 0.0125,)],
+    );
+  }
 }
 
 class AdditionalOptionsPopUpMenuState extends State<AdditionalOptionsPopUpMenu> {

@@ -1,8 +1,10 @@
 import 'package:home_to_do/data_types/category.dart';
 import 'package:home_to_do/data_types/global_settings.dart';
 import 'package:home_to_do/data_types/task.dart';
+import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/global_settings_storage.dart';
 import 'package:home_to_do/utilities/task_storage.dart';
+import 'package:home_to_do/utilities/users_storage.dart';
 import '/utilities/categories_storage.dart';
 
 // Categories global variables
@@ -13,6 +15,10 @@ List<Category> categories = [];
 final TasksStorage tasksStorage = TasksStorage();
 List<Task> tasks = [];
 int lastUniqueGeneratedID = 0;
+
+// Users global variables
+final UsersStorage usersStorage = UsersStorage();
+List<User> users = [];
 
 // Global settings global variables
 final GlobalSettingsStorage globalSettingsStorage = GlobalSettingsStorage();

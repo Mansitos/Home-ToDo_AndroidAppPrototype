@@ -4,6 +4,7 @@ import 'package:home_to_do/data_types/category.dart';
 import 'package:home_to_do/data_types/task.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
+import 'package:home_to_do/utilities/users_utilities.dart';
 import 'globals.dart' as globals;
 
 Future<void> createNewTask(String name, String desc, Category cat, DateTime date, TimeOfDay hour, int score, User user) async {
@@ -27,16 +28,12 @@ Future<void> modifyTask(Task task, String name, String desc, Category cat, DateT
 Future<void> deleteTaskByID(int id) async {
   debugPrint("\n > Delete task with ID:" + id.toString());
   int index = getIndexOfTaskByID(id);
-  print("index:" + index.toString());
   globals.tasks.removeAt(index);
   debugPrint("Now tasks are: " + globals.tasks.toString());
   globals.tasksStorage.saveTasksToFile(globals.tasks);
 }
 
 int getIndexOfTaskByID(int id) {
-  print(id);
-  print(globals.tasks[0].getID().toString());
-
   for (var i = 0; i <= globals.tasks.length - 1; i++) {
     if (globals.tasks[i].getID() == id) {
       return i;
@@ -54,7 +51,7 @@ Task decodeSerializedTask(String encode) {
   TimeOfDay time = decodeTime(data[4]);
   Category cat = decodeSerializedCategory(data[5]);
   int score = int.parse(data[6]);
-  User user = User(name: "temp"); // TODO decode and encode user data type
+  User user = decodeSerializedUser(data[7]); // TODO decode and encode user data type
 
   return Task(id:id,name: name, description: desc, dateLimit: date, timeLimit: time, category: cat, score: score, user: user);
 }
@@ -62,12 +59,14 @@ Task decodeSerializedTask(String encode) {
 String serializeTask(Task task) {
   String sep = ';';
   String encodedID = task.getID().toString();
+  String encodedName = task.name;
   String encodedDate = encodeDate(task.dateLimit);
+  String encodedDesc = task.description;
   String encodedHour = encodeTime(task.timeLimit);
   String encodedCat = serializeCategory(task.category);
   String encodedScore = task.score.toString();
-  String encodedUser = "userPlaceholder"; // TODO
-  return encodedID + sep + task.name + sep + task.description + sep + encodedDate + sep + encodedHour + sep + encodedCat + sep + encodedScore + sep + encodedUser;
+  String encodedUser = serializeUser(task.user);
+  return encodedID + sep + encodedName + sep + encodedDesc + sep + encodedDate + sep + encodedHour + sep + encodedCat + sep + encodedScore + sep + encodedUser;
 }
 
 String encodeDate(DateTime date) {

@@ -26,11 +26,9 @@ Future<bool> initializeApplicationVariables() async {
   // Load categories and tasks from file
   await globals.categoriesStorage.loadCategoriesFromFile();
   await globals.tasksStorage.loadTasksFromFile();
+  await globals.usersStorage.loadUsersFromFile();
   // Load global application variables
   await globals.globalSettingsStorage.loadGlobalSettingsFromFile();
-
-  print(globals.lastUniqueGeneratedID);
-  print(globals.popUpMessagesEnabled);
 
   // TODO: THINGS TO REMOVE IN PRODUCTION!
   if (false) {
@@ -460,7 +458,9 @@ class MainScreenState extends State<MainScreen> {
     // Wipe data...
     await globals.categoriesStorage.saveCategoriesToFile([]);
     await globals.tasksStorage.saveTasksToFile([]);
-    await globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: 0, popUpMessagesEnabled: true));
+    await globals.usersStorage.saveUsersToFile([]);
+    GlobalSettings wipedSettings = GlobalSettings(lastUniqueGeneratedID: 0, popUpMessagesEnabled: true);
+    await globals.globalSettingsStorage.saveGlobalSettingsToFile(wipedSettings);
     // Load wiped (re-generated-data) again...
     await initializeApplicationVariables();
   }
@@ -572,7 +572,6 @@ List<Task> getSelectedTasksList(TaskFilter selectionFilter) {
 }
 
 Widget _tasksPageMainWidgetBuilder(context, void Function() callback, TaskFilter selectionFilter) {
-  // TODO: change with "filtered tasks to visualize, placeholder for now.."
   List<Task> filteredTasks = getSelectedTasksList(selectionFilter);
 
   if (filteredTasks.isNotEmpty) {
