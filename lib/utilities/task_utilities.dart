@@ -4,6 +4,7 @@ import 'package:home_to_do/data_types/category.dart';
 import 'package:home_to_do/data_types/task.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
+import 'package:home_to_do/utilities/global_settings_storage.dart';
 import 'package:home_to_do/utilities/users_utilities.dart';
 import 'globals.dart' as globals;
 
@@ -17,12 +18,13 @@ Future<void> createNewTask(String name, String desc, Category cat, DateTime date
 
 Future<void> modifyTask(Task task, String name, String desc, Category cat, DateTime date, TimeOfDay hour, int score, User user) async {
   Task modifiedTask = Task(id: task.getID(),name: name, description: desc, category: cat, dateLimit: date, timeLimit: hour, score: score, user: user);
-
+  modifiedTask.setCompleted(task.getCompleted());
+  modifiedTask.setUserThatCompleted(task.getUserThatCompleted());
   debugPrint("\n > Modify task with ID " + task.getID().toString());
   int index = getIndexOfTaskByID(task.getID()); // get list index where to overwrite...
   globals.tasks[index] = modifiedTask; // overwrite...
   debugPrint("Now tasks are: " + globals.tasks.toString());
-  globals.tasksStorage.saveTasksToFile(globals.tasks);
+  await globals.tasksStorage.saveTasksToFile(globals.tasks);
 }
 
 Future<void> deleteTaskByID(int id) async {
@@ -30,7 +32,7 @@ Future<void> deleteTaskByID(int id) async {
   int index = getIndexOfTaskByID(id);
   globals.tasks.removeAt(index);
   debugPrint("Now tasks are: " + globals.tasks.toString());
-  globals.tasksStorage.saveTasksToFile(globals.tasks);
+  await globals.tasksStorage.saveTasksToFile(globals.tasks);
 }
 
 int getIndexOfTaskByID(int id) {
@@ -42,7 +44,7 @@ int getIndexOfTaskByID(int id) {
   return -1;
 }
 
-Task decodeSerializedTask(String encode) {
+Future<Task> decodeSerializedTask(String encode) async {
   List<String> data = encode.split(';');
   int id = int.parse(data[0]);
   String name = data[1];
@@ -51,22 +53,30 @@ Task decodeSerializedTask(String encode) {
   TimeOfDay time = decodeTime(data[4]);
   Category cat = decodeSerializedCategory(data[5]);
   int score = int.parse(data[6]);
-  User user = decodeSerializedUser(data[7]); // TODO decode and encode user data type
-
-  return Task(id:id,name: name, description: desc, dateLimit: date, timeLimit: time, category: cat, score: score, user: user);
+  User user = decodeSerializedUser(data[7]);
+  user.image = await globals.usersStorage.loadUserImage(user.name);
+  bool completed = decodeBool(data[8]);
+  User? userThatCompleted = data[9] == "null" ? null : decodeSerializedUser(data[9]);
+  Task task = Task(id:id,name: name, description: desc, dateLimit: date, timeLimit: time, category: cat, score: score, user: user);
+  task.setCompleted(completed);
+  task.setUserThatCompleted(userThatCompleted);
+  return task;
 }
 
 String serializeTask(Task task) {
   String sep = ';';
   String encodedID = task.getID().toString();
   String encodedName = task.name;
-  String encodedDate = encodeDate(task.dateLimit);
   String encodedDesc = task.description;
+  String encodedDate = encodeDate(task.dateLimit);
   String encodedHour = encodeTime(task.timeLimit);
   String encodedCat = serializeCategory(task.category);
   String encodedScore = task.score.toString();
   String encodedUser = serializeUser(task.user);
-  return encodedID + sep + encodedName + sep + encodedDesc + sep + encodedDate + sep + encodedHour + sep + encodedCat + sep + encodedScore + sep + encodedUser;
+  String encodeCompleted = encodeBool(task.getCompleted());
+  String encodedCompletedUser = task.getUserThatCompleted() == null ? "null" : serializeUser(task.getUserThatCompleted()!);
+  String encoded = encodedID + sep + encodedName + sep + encodedDesc + sep + encodedDate + sep + encodedHour + sep + encodedCat + sep + encodedScore + sep + encodedUser + sep + encodeCompleted + sep + encodedCompletedUser;
+  return encoded;
 }
 
 String encodeDate(DateTime date) {

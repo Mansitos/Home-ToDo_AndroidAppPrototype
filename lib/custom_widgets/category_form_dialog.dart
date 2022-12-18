@@ -149,11 +149,11 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                         if (widget.modifyMode == false) {
                           Navigator.of(context).pop();
                           createNewCategory(categoryName, categoryEmoji);
-                          showPopUpMessage(context,"✅ Category created!",null);
+                          showPopUpMessage(context,"✅","Category created!",null);
                         } else {
                           Navigator.of(context).pop();
                           modifyCategory(widget.modifyIndex, categoryName, categoryEmoji);
-                          showPopUpMessage(context,"✅ Category modified!",null);
+                          showPopUpMessage(context,"✅","Category modified!",null);
                         }
                       } else {
                         debugPrint("Error! Validation failed in category creation form!");

@@ -30,7 +30,7 @@ class GlobalSettingsStorage {
   Future<File> saveGlobalSettingsToFile(GlobalSettings settings) async {
     final file = await _localGlobalSettingsFile;
 
-    String encode = settings.lastUniqueGeneratedID.toString() + "|" + encodeBool(settings.popUpMessagesEnabled);
+    String encode = settings.lastUniqueGeneratedID.toString() + "|" + encodeBool(settings.popUpMessagesEnabled)  + "|" + encodeBool(settings.compactTaskListViewEnabled);
 
     debugPrint("\n > Global Settings saved successfully! location/path: " + file.path);
     return file.writeAsString('$encode');
@@ -44,10 +44,11 @@ class GlobalSettingsStorage {
       List<String> data = contents.split('|');
 
       if(contents != "") {
-        GlobalSettings settings = GlobalSettings(lastUniqueGeneratedID: int.parse(data[0]), popUpMessagesEnabled: decodeBool(data[1]));
+        GlobalSettings settings = GlobalSettings(lastUniqueGeneratedID: int.parse(data[0]), popUpMessagesEnabled: decodeBool(data[1]), compactTaskListViewEnabled: decodeBool(data[2]));
 
         globals.lastUniqueGeneratedID = settings.lastUniqueGeneratedID;
         globals.popUpMessagesEnabled = settings.popUpMessagesEnabled;
+        globals.compactTaskListViewEnabled = settings.compactTaskListViewEnabled;
       }
       debugPrint(" > Global Settings loaded successfully!");
     } catch (e) {

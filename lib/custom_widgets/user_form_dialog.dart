@@ -1,45 +1,62 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:home_to_do/custom_widgets/pop_up_message.dart';
+import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/users_utilities.dart';
-import 'package:home_to_do/utilities/globals.dart' as globals;
+import 'package:image_crop/image_crop.dart';
 import 'package:image_picker/image_picker.dart';
 
 class UserDialogForm extends StatefulWidget {
-  const UserDialogForm({Key? key, required this.modifyMode, required this.modifyIndex}) : super(key: key);
+  const UserDialogForm({Key? key, required this.modifyMode, required this.userToModify, required this.onChange}) : super(key: key);
 
   final bool modifyMode;
-  final int modifyIndex;
+  final User userToModify;
+  final voidCallback onChange;
 
   @override
   State<UserDialogForm> createState() => UserDialogFormState();
 }
+
+typedef void voidCallback();
 
 class UserDialogFormState extends State<UserDialogForm> {
   final _formKey = GlobalKey<FormState>();
 
   String userName = "";
   String oldUserName = "";
+  int oldScore = 0;
   File? userImage;
+  File? oldUserImage;
 
   @override
   Widget build(BuildContext context) {
-    String title = "Create new user";
+    String title = "Create New User";
     if (widget.modifyMode == true) {
-      title = "Modify user";
-      oldUserName = globals.users[widget.modifyIndex].name;
+      title = "Modify User";
+      oldUserName = widget.userToModify.name;
+      oldScore = widget.userToModify.score;
+      oldUserImage = widget.userToModify.image;
     }
 
     Future _pickImage({bool fromCamera: false}) async {
       try {
         if (!fromCamera) {
           final temp = await ImagePicker().pickImage(source: ImageSource.gallery);
-          this.userImage = File(temp!.path);
+          final temp_2 = await ImageCrop.sampleImage(
+            file: File(temp!.path),
+            preferredWidth: 512,
+            preferredHeight: 512,
+          );
+          this.userImage = File(temp_2.path);
         }
         if (fromCamera) {
           final temp = await ImagePicker().pickImage(source: ImageSource.camera);
-          this.userImage = File(temp!.path);
+          final temp_2 = await ImageCrop.sampleImage(
+            file: File(temp!.path),
+            preferredWidth: 512,
+            preferredHeight: 512,
+          );
+          this.userImage = File(temp_2.path);
         }
       } catch (e) {
         print('Failed to pick image: $e');
@@ -47,7 +64,8 @@ class UserDialogFormState extends State<UserDialogForm> {
     }
 
     void _updateImage() {
-      setState(() {});
+      setState(() {
+      });
     }
 
     return AlertDialog(
@@ -61,7 +79,7 @@ class UserDialogFormState extends State<UserDialogForm> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 MaterialButton(
-                  child: Container(color: Colors.red, width: 150, height: 150, child: _displayUserImage(img: userImage, modify: widget.modifyMode)),
+                  child: Container(padding: EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle), child: ClipOval(child: SizedBox.fromSize(size: Size.fromRadius(60), child: _displayUserImage()))),
                   onPressed: () {
                     // Navigator.pop close the pop-up while showing the dialog.
                     // We have to wait till the animations finish, and then open the dialog.
@@ -109,6 +127,8 @@ class UserDialogFormState extends State<UserDialogForm> {
                     });
                   },
                 ),
+                Container(height: 4,),
+                Text("Tap to change picture!", style: TextStyle(color: Colors.black54, fontSize: 10),),
                 TextFormField(
                   style: TextStyle(fontSize: 18),
                   maxLength: 15,
@@ -175,22 +195,23 @@ class UserDialogFormState extends State<UserDialogForm> {
                 child: FloatingActionButton(
                   heroTag: "ConfirmUser",
                   onPressed: () {
-                    setState(() {
+                    setState(() async {
                       debugPrint("Confirm user creation/modify button pressed!");
                       if (_formKey.currentState!.validate()) {
                         debugPrint("Ok! Valid category form!");
                         if (widget.modifyMode == false) {
                           Navigator.of(context).pop();
-                          createNewUser(userName);
-                          showPopUpMessage(context, "✅ User created!", null);
+                          await createNewUser(userName, userImage);
+                          showPopUpMessage(context, "✅", "User created!", null);
                         } else {
                           Navigator.of(context).pop();
-                          modifyUser(widget.modifyIndex, userName);
-                          showPopUpMessage(context, "✅ User modified!", null);
+                          await modifyUserByName(oldUserName, userName, oldScore, userImage);
+                          showPopUpMessage(context, "✅", "User modified!", null);
                         }
                       } else {
                         debugPrint("Error! Validation failed in user creation form!");
                       }
+                      widget.onChange();
                     });
                   },
                   tooltip: "Confirm",
@@ -204,17 +225,23 @@ class UserDialogFormState extends State<UserDialogForm> {
     );
   }
 
-  _displayUserImage({required File? img, required bool modify}) {
-    if (modify == true) {
-      print("modddify!");
-      // diverso...
-    } else {
-      if (img != null) {
-        return Image.file(img);
+  _displayUserImage() {
+    if(widget.modifyMode == false) {
+      if (userImage != null) {
+        return Image.file(userImage!, fit: BoxFit.cover,);
       } else {
-        return Image.asset("lib/assets/user_images/default_user_img.png");
-        // default img...
+        return Image.asset("lib/assets/user_images/default_user_img.png", fit: BoxFit.cover,);
       }
+    }else{
+      if (userImage != null) {
+        return Image.file(userImage!, fit: BoxFit.cover,);
+      } else if(oldUserImage != null){
+        return Image.file(oldUserImage!, fit: BoxFit.cover,);
+      }else{
+        return Image.asset("lib/assets/user_images/default_user_img.png", fit: BoxFit.cover,);
+      }
+
     }
+
   }
 }

@@ -44,7 +44,7 @@ class UsersStorage {
 
     debugPrint("\n > Users saved successfully! location/path: " + file.path);
     debugPrint(users.toString());
-    return file.writeAsString(encode);
+    return await file.writeAsString(encode);
   }
 
   Future<bool> loadUsersFromFile() async {
@@ -57,7 +57,9 @@ class UsersStorage {
 
       if (encodedUsers.length > 1) {
         for (var i = 0; i < encodedUsers.length; i++) {
-          users.add(decodeSerializedUser(encodedUsers[i]));
+          User userToAdd = decodeSerializedUser(encodedUsers[i]);
+          userToAdd.image = await loadUserImage(userToAdd.name);
+          users.add(userToAdd);
         }
       } else {
         users.add(User(name: "All", score: 999999999999999999));
@@ -74,6 +76,57 @@ class UsersStorage {
       debugPrint(" > Error in loading Users file!");
       debugPrint(e.toString());
       return false;
+    }
+  }
+
+  Future<void> saveUserImage(String userName, File image) async {
+    final path = await _localPath;
+
+    File file = File('$path/user_images/' + userName + ".png");
+
+    if (!file.existsSync()) {
+      file = await File('$path/user_images/' + userName + ".png").create(recursive: true);
+    }
+    await image.copy('$path/user_images/' + userName + ".png");
+    debugPrint("> Image saved for user:" + userName + "\n");
+  }
+
+  Future<void> deleteUserImage(String userName) async {
+    debugPrint("> Delete img procedure:");
+    try {
+      File? img = await loadUserImage(userName);
+
+      if (img!.existsSync()) {
+        debugPrint("> Image deleted for user: " + userName + "\n");
+        await img.delete();
+      }
+    } catch (e) {
+      debugPrint("> No Image to delete for user: " + userName + "\n");
+    }
+  }
+
+  Future<void> updateUserImageFilename(String oldUserName, String newUserName) async {
+    debugPrint(">> Renaming img procedure:");
+    File? oldImg = await loadUserImage(oldUserName);
+
+    if (oldImg!.existsSync()) {
+      debugPrint("> Image renamed for user: " + newUserName);
+      await saveUserImage(newUserName, oldImg);
+      await oldImg.delete();
+    }
+  }
+
+  Future<File?> loadUserImage(String userName) async {
+    final path = await _localPath;
+
+    File img = File('$path/user_images/' + userName + ".png");
+
+    if (img.existsSync()) {
+      debugPrint("> Image found for user: " + userName);
+      return img;
+    } else {
+      debugPrint("> Image not found for user: " + userName);
+      return null;
     }
   }
 }

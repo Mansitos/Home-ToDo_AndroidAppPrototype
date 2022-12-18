@@ -13,7 +13,7 @@ class TaskFilter {
   DateTime startingDate;
   DateTime? endDate; // if null -> endDate = endless
 
-  List<Task> applyTo(List<Task> tasksToFilter) {
+  List<Task> applyTo(List<Task> tasksToFilter, bool sort) {
     debugPrint("\n------------ Task Filter Log ------------");
     debugPrint(" > Input tasks count: " + tasksToFilter.length.toString());
     debugPrint(" > Category: " + category.toString());
@@ -24,14 +24,16 @@ class TaskFilter {
     for (var i = 0; i <= tasksToFilter.length - 1; i++) {
       Task task = tasksToFilter[i]; // getting i-th task...
 
-      if (category != null) {
-        // Filter category...
-        if (task.category.toString() == category.toString() || category == globals.categories[0]) {
-          if (checkDateLimit(task)) {
-            filteredTasks.add(task);
+      if (category != null) { // Filter by category...
+        if (task.category.toString() == category.toString() || category.toString() == globals.categories[0].toString()) {
+          if (checkDateLimit(task)) { // Filter by date/time...
+            if (user!.name == globals.users[0].name || user!.name == task.user.name || task.user.name == globals.users[0].name) {
+              filteredTasks.add(task);
+            } else {
+              continue; // Selected user was not "All" or the one assigned for this task, discard and check next task.
+            }
           } else {
-            print("discarded for time date");
-            continue; // Task date was not in range of filter, discad and check next task.
+            continue; // Task date was not in range of filter, discard and check next task.
           }
         } else {
           continue; // Category was different, discard and check next task.
@@ -40,6 +42,12 @@ class TaskFilter {
     }
 
     debugPrint(" > Filtered tasks count: " + filteredTasks.length.toString());
+
+    if (sort == true) {
+      filteredTasks = _sortByDate(filteredTasks);
+      debugPrint(" > Task were also temporally ordered!");
+    }
+
     debugPrint("-----------------------------------------");
     return filteredTasks;
   }
@@ -48,7 +56,7 @@ class TaskFilter {
     if (endDate == null) {
       // It's not a range check.
       return areSameDay(startingDate, task.dateLimit);
-    } else if ((task.dateLimit.isBefore(endDate!) || areSameDay(task.dateLimit,endDate!)) && (startingDate.isBefore(task.dateLimit))|| areSameDay(startingDate,task.dateLimit)) {
+    } else if ((task.dateLimit.isBefore(endDate!) || areSameDay(task.dateLimit, endDate!)) && (startingDate.isBefore(task.dateLimit)) || areSameDay(startingDate, task.dateLimit)) {
       // It's a range check!
       return true;
     } else {
@@ -59,4 +67,22 @@ class TaskFilter {
   bool areSameDay(DateTime first, DateTime second) {
     return (first.year == second.year && first.month == second.month && first.day == second.day);
   }
+
+  List<Task> _sortByDate(List<Task> filteredTasks) {
+    int taskDateComparison(Task a, Task b) {
+      DateTime scoreA = a.dateLimit;
+      DateTime scoreB = b.dateLimit;
+      if (scoreA.isBefore(scoreB)) {
+        return -1;
+      } else if (scoreA.isAfter(scoreB)) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+
+    filteredTasks.sort(taskDateComparison);
+    return filteredTasks;
+  }
 }
+

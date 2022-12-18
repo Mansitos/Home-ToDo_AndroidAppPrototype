@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:home_to_do/data_types/global_settings.dart';
@@ -7,6 +7,7 @@ import 'package:home_to_do/pages/search_page.dart';
 import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/pages/users_page.dart';
 import 'package:home_to_do/pages/categories_page.dart';
+import 'package:path_provider/path_provider.dart';
 import 'custom_widgets/category_horizontal_list_view.dart';
 import 'custom_widgets/pop_up_message.dart';
 import 'custom_widgets/task_tile.dart';
@@ -30,14 +31,6 @@ Future<bool> initializeApplicationVariables() async {
   // Load global application variables
   await globals.globalSettingsStorage.loadGlobalSettingsFromFile();
 
-  // TODO: THINGS TO REMOVE IN PRODUCTION!
-  if (false) {
-    await globals.categoriesStorage.saveCategoriesToFile([]);
-    await globals.tasksStorage.saveTasksToFile([]);
-    for (var i = 0; i < globals.tasks.length; i++) {
-      // ...
-    }
-  }
   return true;
 }
 
@@ -101,8 +94,21 @@ class MainScreenState extends State<MainScreen> {
     });
   }
 
-  void rebuildMainScreen() {
-    setState(() {});
+  void rebuildMainScreen(bool restoreSelectedUser) {
+    setState(() {
+      if (restoreSelectedUser == true) {
+        selectedUser = globals.users[0];
+      }
+    });
+  }
+
+  void completeTaskCallback(Task task) {
+    if (task.getCompleted() == false) {
+      task.completeTask(selectedUser!);
+    } else {
+      task.undoComplete();
+    }
+    rebuildMainScreen(false);
   }
 
   // By default, the default one (which is always in first pos)
@@ -112,8 +118,8 @@ class MainScreenState extends State<MainScreen> {
   DateTime? selectedStartingDate = DateTime.now();
   DateTime? selectedEndDate;
 
-  // By default is null, which means no filter for user
-  User? selectedUser;
+  // By default, the default one (which is always in first pos)
+  User? selectedUser = globals.users[0];
 
   @override
   Widget build(BuildContext context) {
@@ -127,8 +133,7 @@ class MainScreenState extends State<MainScreen> {
             selectedStartingDate = val[0];
             selectedEndDate = val[1];
             debugPrint("> Changed time filter:" + selectedStartingDate.toString() + " to " + selectedEndDate.toString());
-            rebuildMainScreen();
-            return val; // TODO: Why this return is needed....???
+            rebuildMainScreen(false);
           },
         ),
         actions: <Widget>[
@@ -159,14 +164,20 @@ class MainScreenState extends State<MainScreen> {
                     'Home To-Do',
                     style: TextStyle(fontSize: 35),
                   ),
+                  Container(height: 3,),
                   Expanded(
                     child: Container(child: Image.asset("lib/assets/logo.png")),
-                  )
-                ],
+                  ),
+                Container(height: 3,)],
               ),
             ),
             ListTile(
-              title: const Text('ℹ️ About the app'), // Todo: alert dialog with info about app
+              title: Row(
+                children: [
+                  Icon(Icons.info_rounded, color: Colors.black,),
+                  const Text(' About the app'),
+                ],
+              ),
               onTap: () {
                 // Navigator.pop close the pop-up while showing the dialog.
                 // We have to wait till the animations finish, and then open the dialog.
@@ -206,9 +217,14 @@ class MainScreenState extends State<MainScreen> {
                 });
               },
             ),
-            Divider(),
+            Divider(height: 10),
             ListTile(
-              title: const Text('🔥 Wipe all data'),
+              title: Row(
+                children: [
+                  Icon(Icons.local_fire_department,color: Colors.red,),
+                  const Text(' Wipe all data'),
+                ],
+              ),
               onTap: () {
                 // Navigator.pop close the pop-up while showing the dialog.
                 // We have to wait till the animations finish, and then open the dialog.
@@ -261,8 +277,8 @@ class MainScreenState extends State<MainScreen> {
                                       debugPrint("Data Wipe confirmed!");
                                       await _wipeAllData();
                                       Navigator.of(context).pop();
-                                      showPopUpMessage(context, "🚀 Data successfully sent into a black hole!\nIt's gone forever...", 2300);
-                                      rebuildMainScreen();
+                                      showPopUpMessage(context, "🚀", "Data successfully sent into a black hole!\nIt's gone forever...", 2300);
+                                      rebuildMainScreen(false);
                                     },
                                     tooltip: "Confirm",
                                     child: const Icon(Icons.delete),
@@ -276,9 +292,14 @@ class MainScreenState extends State<MainScreen> {
                 });
               },
             ),
-            Divider(),
+            Divider(height: 10),
             ListTile(
-              title: const Text('⭐ Rate on the app store'), // TODO: go to play store page
+              title: Row(
+                children: [
+                  Icon(Icons.star,color: Colors.amber,),
+                  const Text(' Rate on the app store'),
+                ],
+              ),
               onTap: () {
                 // Navigator.pop close the pop-up while showing the dialog.
                 // We have to wait till the animations finish, and then open the dialog.
@@ -318,9 +339,14 @@ class MainScreenState extends State<MainScreen> {
                 });
               },
             ),
-            Divider(),
+            Divider(height: 10),
             ListTile(
-              title: const Text('🔧 Application settings'), // TODO: go to android settings page
+              title: Row(
+                children: [
+                  Icon(Icons.app_settings_alt, color: Colors.black,),
+                  const Text(' Application settings'),
+                ],
+              ), // TODO: go to android settings page
               onTap: () {
                 // Navigator.pop close the pop-up while showing the dialog.
                 // We have to wait till the animations finish, and then open the dialog.
@@ -360,13 +386,14 @@ class MainScreenState extends State<MainScreen> {
                 });
               },
             ),
-            Divider(),
+            Divider(height: 10),
             ListTile(
               title: Row(
                 children: [
-                  Text(globals.popUpMessagesEnabled ? '✅  Pop-Up messages enabled' : '❌ Pop-Up messages disabled'),
+                  globals.popUpMessagesEnabled ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.cancel, color: Colors.red,),
+                  Text(globals.popUpMessagesEnabled ? ' Pop-Up messages' : ' Pop-Up messages'),
                 ],
-              ), // TODO: go to play store page
+              ),
               onTap: () {
                 // Navigator.pop close the pop-up while showing the dialog.
                 // We have to wait till the animations finish, and then open the dialog.
@@ -383,7 +410,7 @@ class MainScreenState extends State<MainScreen> {
                           content: const Text('This option enables/disables pop-up messages, like for example:\n\"✅ New task created\".', textAlign: TextAlign.center),
                           actions: <Widget>[
                             Padding(
-                              padding: const EdgeInsets.all(12.0),
+                              padding: const EdgeInsets.all(8.0),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
@@ -392,13 +419,13 @@ class MainScreenState extends State<MainScreen> {
                                       setState(() {
                                         globals.popUpMessagesEnabled = false;
                                         debugPrint("Pop-Up messages disabled");
-                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled));
+                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled));
                                         Navigator.of(context).pop();
                                       });
                                     },
                                     child: Text(
                                       globals.popUpMessagesEnabled ? "Disable" : "Keep disabled",
-                                      style: TextStyle(fontSize: 18, color: Colors.black),
+                                      style: TextStyle(fontSize: 19, color: Colors.black),
                                     ),
                                     style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
                                   ),
@@ -407,13 +434,13 @@ class MainScreenState extends State<MainScreen> {
                                       setState(() {
                                         globals.popUpMessagesEnabled = true;
                                         debugPrint("Pop-Up messages enabled");
-                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled));
+                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled));
                                         Navigator.of(context).pop();
                                       });
                                     },
                                     child: Text(
                                       globals.popUpMessagesEnabled ? "Keep enabled" : "Enable",
-                                      style: TextStyle(fontSize: 18, color: Colors.black),
+                                      style: TextStyle(fontSize: 19, color: Colors.black),
                                     ),
                                     style: TextButton.styleFrom(backgroundColor: Colors.amber),
                                   ),
@@ -426,7 +453,74 @@ class MainScreenState extends State<MainScreen> {
                 });
               },
             ),
-            Divider(),
+            Divider(height: 10),
+            ListTile(
+              title: Row(
+                children: [
+                  globals.compactTaskListViewEnabled ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.cancel, color: Colors.red,),
+                  Text(globals.compactTaskListViewEnabled ? ' Compact tasks-list view' : ' Compact tasks-list view'),
+                ],
+              ),
+              onTap: () {
+                // Navigator.pop close the pop-up while showing the dialog.
+                // We have to wait till the animations finish, and then open the dialog.
+                WidgetsBinding.instance?.addPostFrameCallback((_) {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Column(
+                            children: [
+                              const Text("Compact Tasks List View"),
+                            ],
+                          ),
+                          content: const Text('This option enables/disables compact view of the list of tasks.', textAlign: TextAlign.center),
+                          actions: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        globals.compactTaskListViewEnabled = false;
+                                        debugPrint("Compact Tasks List View Disabled");
+                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled));
+                                        Navigator.of(context).pop();
+                                      });
+                                    },
+                                    child: Text(
+                                      globals.compactTaskListViewEnabled ? "Disable" : "Keep disabled",
+                                      style: TextStyle(fontSize: 19, color: Colors.black),
+                                    ),
+                                    style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        globals.compactTaskListViewEnabled = true;
+                                        debugPrint("Compact Tasks List View enabled");
+                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled));
+                                        Navigator.of(context).pop();
+                                      });
+                                    },
+                                    child: Text(
+                                      globals.compactTaskListViewEnabled ? "Keep enabled" : "Enable",
+                                      style: TextStyle(fontSize: 19, color: Colors.black),
+                                    ),
+                                    style: TextButton.styleFrom(backgroundColor: Colors.amber),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      });
+                });
+              },
+            ),
+            Divider(height: 10),
           ],
         ),
       ),
@@ -440,16 +534,24 @@ class MainScreenState extends State<MainScreen> {
                 categories: globals.categories,
                 onChange: (Category val) {
                   selectedCategory = val;
-                  rebuildMainScreen();
+                  rebuildMainScreen(false);
                 },
               ),
             ),
+            _additionalUserWidgetText(),
             Expanded(
-              child: _tasksPageMainWidgetBuilder(context, rebuildMainScreen, TaskFilter(startingDate: selectedStartingDate!, endDate: selectedEndDate, category: selectedCategory, user: selectedUser)),
+              child: _tasksPageMainWidgetBuilder(context, rebuildMainScreen, completeTaskCallback, TaskFilter(startingDate: selectedStartingDate!, endDate: selectedEndDate, category: selectedCategory, user: selectedUser)),
             ),
           ],
         ),
-        UserSelectionDropUpWidget(key: userSelectionDropUpKey),
+        UserSelectionDropUpWidget(
+          key: userSelectionDropUpKey,
+          onUserSelected: (User user) {
+            debugPrint(" > User filter changed to: " + user.name);
+            selectedUser = user;
+            rebuildMainScreen(false);
+          },
+        ),
       ]),
     );
   }
@@ -459,21 +561,47 @@ class MainScreenState extends State<MainScreen> {
     await globals.categoriesStorage.saveCategoriesToFile([]);
     await globals.tasksStorage.saveTasksToFile([]);
     await globals.usersStorage.saveUsersToFile([]);
-    GlobalSettings wipedSettings = GlobalSettings(lastUniqueGeneratedID: 0, popUpMessagesEnabled: true);
+    GlobalSettings wipedSettings = GlobalSettings(lastUniqueGeneratedID: 0, popUpMessagesEnabled: true, compactTaskListViewEnabled: false);
     await globals.globalSettingsStorage.saveGlobalSettingsToFile(wipedSettings);
+
+    // Deleting all users pictures
+    final directory = await getApplicationDocumentsDirectory();
+    if (await Directory(directory.path + "/user_images/").existsSync()) {
+      await new Directory(directory.path + "/user_images/").delete(recursive: true);
+    }
+    await new Directory(directory.path + "/user_images/").create(recursive: true);
+
     // Load wiped (re-generated-data) again...
     await initializeApplicationVariables();
   }
+
+  Widget _additionalUserWidgetText() {
+    if (selectedUser!.name != globals.users[0].name) {
+      return Padding(
+        padding: const EdgeInsets.all(6.0),
+        child: Container(
+            child: Text(
+          "📝 Available tasks for " + selectedUser!.name + ":",
+          style: TextStyle(color: Colors.white, fontSize: 14),
+        )),
+      );
+    } else {
+      return Container();
+    }
+  }
 }
 
-List<Widget> listOfTaskBuilder(BuildContext context, void Function() rebuildMainScreenCallback, List<Task> filteredTasks) {
+List<Widget> listOfTaskBuilder(BuildContext context, void Function(bool restoreSelectedUser) rebuildMainScreenCallback, void Function(Task) taskCompletedCallback, List<Task> filteredTasks) {
   List<Widget> taskTiles = [];
 
   for (var i = 0; i < filteredTasks.length; i++) {
     Widget taskTile = TaskTileWidget(
       task: filteredTasks[i],
       onChange: () {
-        rebuildMainScreenCallback();
+        rebuildMainScreenCallback(false);
+      },
+      onTaskComplete: (Task val) {
+        taskCompletedCallback(val);
       },
     );
     taskTiles.add(taskTile);
@@ -489,9 +617,9 @@ class MainScreen extends StatefulWidget {
 }
 
 class MainScreenAdditionalOptionsDropdown extends StatefulWidget {
-  MainScreenAdditionalOptionsDropdown({Key? key, required this.rebuildMainScreenCallback}) : super(key: key);
+  MainScreenAdditionalOptionsDropdown({Key? key, required this.rebuildMainScreenCallback(bool restoreSelectedUser)}) : super(key: key);
 
-  void Function() rebuildMainScreenCallback;
+  void Function(bool restoreSelectedUser) rebuildMainScreenCallback;
 
   @override
   State<MainScreenAdditionalOptionsDropdown> createState() => MainScreenAdditionalOptionsDropdownState();
@@ -506,11 +634,10 @@ class MainScreenTimeIntervalSelectionDropdown extends StatefulWidget {
   State<MainScreenTimeIntervalSelectionDropdown> createState() => MainScreenTimeIntervalSelectionDropdownState();
 }
 
-typedef List<DateTime?> DateTimeRangeCallback(List<DateTime?> val);
+typedef void DateTimeRangeCallback(List<DateTime?> val);
 
 class MainMenuBottomNavBar extends StatefulWidget {
   final GlobalKey? userDropUpWidgetKey;
-
   final Function? showUserDropUpFunction;
 
   const MainMenuBottomNavBar({Key? key, this.userDropUpWidgetKey, this.showUserDropUpFunction}) : super(key: key);
@@ -531,17 +658,17 @@ class MainScreenAdditionalOptionsDropdownState extends State<MainScreenAdditiona
             debugPrint(selectedValue.toString());
             if (value == 1) {
               Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen())).then((_) => setState(() {
-                    widget.rebuildMainScreenCallback();
+                    widget.rebuildMainScreenCallback(false); // TODO: check if needed
                   }));
             }
             if (value == 2) {
               Navigator.push(context, MaterialPageRoute(builder: (context) => CategoriesScreen())).then((_) => setState(() {
-                    widget.rebuildMainScreenCallback();
+                    widget.rebuildMainScreenCallback(false); // TODO: check if needed
                   }));
             }
             if (value == 3) {
               Navigator.push(context, MaterialPageRoute(builder: (context) => UserScreen())).then((_) => setState(() {
-                    widget.rebuildMainScreenCallback();
+                    widget.rebuildMainScreenCallback(true);
                   }));
             }
           });
@@ -568,16 +695,16 @@ class MainScreenAdditionalOptionsDropdownState extends State<MainScreenAdditiona
 
 List<Task> getSelectedTasksList(TaskFilter selectionFilter) {
   List<Task> allTasks = globals.tasks;
-  return selectionFilter.applyTo(allTasks);
+  return selectionFilter.applyTo(allTasks,true);
 }
 
-Widget _tasksPageMainWidgetBuilder(context, void Function() callback, TaskFilter selectionFilter) {
+Widget _tasksPageMainWidgetBuilder(context, void Function(bool restoreSelectedUser) callback, void Function(Task) completeTaskCallback, TaskFilter selectionFilter) {
   List<Task> filteredTasks = getSelectedTasksList(selectionFilter);
 
   if (filteredTasks.isNotEmpty) {
     return ListView(
       shrinkWrap: true,
-      children: listOfTaskBuilder(context, callback, filteredTasks),
+      children: listOfTaskBuilder(context, callback, completeTaskCallback, filteredTasks),
     );
   } else {
     return _noTasksWidgetBuilder();
@@ -592,13 +719,15 @@ Widget _noTasksWidgetBuilder() {
       height: 300,
       child: Column(
         children: const [
-          Text("No tasks found!", style: TextStyle(fontSize: 22, color: Colors.white)),
+          Text("No tasks found!", style: TextStyle(fontSize: 24, color: Colors.white)),
           Padding(
             padding: EdgeInsets.all(12),
-            child: Text(" 🔍",
-                style: TextStyle(
-                  fontSize: 75,
-                )),
+            child: Center(
+              child: Text("🔍",
+                  style: TextStyle(
+                    fontSize: 70,
+                  )),
+            ),
           ),
           Text(
             "There are no tasks matching the currently selected filters! You can rest 😝",
@@ -658,23 +787,41 @@ class MainMenuBottomNavBarState extends State<MainMenuBottomNavBar> {
 
 class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeIntervalSelectionDropdown> {
   String dropdownValue = 'Today';
+  List<DateTime?> customInterval = [];
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-            value: dropdownValue,
-            icon: const Icon(Icons.arrow_drop_down),
-            onChanged: (String? newValue) {
-              setState(() {
-                dropdownValue = newValue!;
-                widget.onChange(_getTimeRange(dropdownValue));
-              });
-            },
-            items: selectedMainScreenTimeIntervalSelectionDropdownItems));
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+              value: dropdownValue,
+              icon: const Icon(Icons.arrow_drop_down),
+              onChanged: (String? newValue) {
+                setState(() async {
+                  var oldValue = dropdownValue;
+                  dropdownValue = newValue!;
+                  List<DateTime?> dates = await _getTimeRange(dropdownValue);
+                  if (dates == []) {
+                    dropdownValue = oldValue;
+                    // do not update!
+                  } else {
+                    widget.onChange(dates);
+                  }
+
+                  if(dropdownValue == "Custom Interval"){
+                    customInterval = dates;
+                  }else{
+                    customInterval = [];
+                  }
+
+                });
+              },
+              items: selectedMainScreenTimeIntervalSelectionDropdownItems)),
+    );
   }
 
-  List<DateTime?> _getTimeRange(String value) {
+  Future<List<DateTime?>> _getTimeRange(String value) async {
     DateTime today = DateTime.now();
     switch (value) {
       case "Today":
@@ -686,20 +833,101 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
       case "This Month":
         return [today, DateTime(today.year, today.month + 1, today.day)];
       case "Custom Interval":
-        return []; // TODO: ... custom interval selection implementation!
+        return await _dateTimeRangeSelection();
       default:
         return [];
     }
   }
+
+  Future<List<DateTime?>> _dateTimeRangeSelection() async {
+    DateTime today = DateTime.now();
+    DateTimeRange dateRange;
+    if(customInterval.isEmpty) {
+      dateRange = DateTimeRange(start: today, end: DateTime(today.year, today.month, today.day + 4));
+    }else{
+      dateRange = DateTimeRange(start: customInterval[0]!, end: customInterval[1]!);
+    }
+
+    DateTimeRange? newDateRange = await showDateRangePicker(
+        context: context,
+        initialDateRange: dateRange,
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2500),
+        helpText: "Time Range Selection",
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.dark(
+                primary: Colors.amber,
+                onPrimary: Colors.black,
+                onSurface: Colors.black,
+                surface: Colors.white,
+                background: Colors.white,
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  primary: Colors.black, // button text color
+                ),
+              ),
+            ),
+            child: child!,
+          );
+        });
+
+    if (newDateRange == null) {
+      return [];
+    } else {
+      return [newDateRange.start, newDateRange.end];
+    }
+  }
+
+  List<DropdownMenuItem<String>> get selectedMainScreenTimeIntervalSelectionDropdownItems {
+    List<DropdownMenuItem<String>> items = [
+      DropdownMenuItem(child: Text("Today"), value: "Today"),
+      DropdownMenuItem(child: Text("Tomorrow"), value: "Tomorrow"),
+      DropdownMenuItem(child: Text("This Week"), value: "This Week"),
+      DropdownMenuItem(child: Text("This Month"), value: "This Month"),
+      DropdownMenuItem(child: _getCustomIntervalDropDownText(dropdownValue), value: "Custom Interval"),
+    ];
+    return items;
+  }
+
+  Widget _getCustomIntervalDropDownText(String dropdownValue) {
+    if (dropdownValue != "Custom Interval") {
+      return Text("Custom Interval");
+    } else {
+      return Text(monthToText(customInterval[0]!.month) + " " + customInterval[0]!.day.toString() + " - " + monthToText(customInterval[1]!.month) + " " + customInterval[1]!.day.toString());
+    }
+  }
 }
 
-List<DropdownMenuItem<String>> get selectedMainScreenTimeIntervalSelectionDropdownItems {
-  List<DropdownMenuItem<String>> items = const [
-    DropdownMenuItem(child: Text("Today"), value: "Today"),
-    DropdownMenuItem(child: Text("Tomorrow"), value: "Tomorrow"),
-    DropdownMenuItem(child: Text("This Week"), value: "This Week"),
-    DropdownMenuItem(child: Text("This Month"), value: "This Month"),
-    DropdownMenuItem(child: Text("Custom Interval"), value: "Custom Interval"),
-  ];
-  return items;
+String monthToText(int month) {
+  switch (month) {
+    case 1:
+      return ("Jan");
+    case 2:
+      return ("Feb");
+    case 3:
+      return ("Mar");
+    case 4:
+      return ("Apr");
+    case 5:
+      return ("May");
+    case 6:
+      return ("Jun");
+    case 7:
+      return ("Jul");
+    case 8:
+      return ("Aug");
+    case 9:
+      return ("Sep");
+    case 10:
+      return ("Oct");
+    case 11:
+      return ("Nov");
+    case 12:
+      return ("Dec");
+    default:
+      return ("ERROR");
+  }
 }

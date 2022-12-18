@@ -13,7 +13,7 @@ class CategoryHorizontalListView extends StatefulWidget {
   State<CategoryHorizontalListView> createState() => CategoryHorizontalListViewState();
 }
 
-typedef Category CategoryCallback(Category val);
+typedef void CategoryCallback(Category val);
 
 class CategoryHorizontalListViewState extends State<CategoryHorizontalListView> {
   var selected_index = 0;

@@ -11,6 +11,7 @@ import 'package:home_to_do/utilities/globals.dart' as globals;
 import 'package:home_to_do/utilities/task_utilities.dart';
 import 'package:home_to_do/utilities/users_utilities.dart';
 
+// Main Widget of the Main Page
 class TaskScreen extends StatefulWidget {
   TaskScreen({Key? key, this.mode, this.taskToModify}) : super(key: key);
 
@@ -22,25 +23,29 @@ class TaskScreen extends StatefulWidget {
 }
 
 class TaskScreenState extends State<TaskScreen> {
-  Category startingTaskCategory = globals.categories[0];
+  Category startingSelectedCategory = globals.categories[0];
   DateTime startingSelectedDate = DateTime.now();
   TimeOfDay startingSelectedHour = TimeOfDay.now();
-  bool startingReminder = false;
-  int startingScore = 3;
-  User startingUser = globals.users[0];
+  bool startingSelectedReminder = false;
+  int startingSelectedScore = 3;
+  User startingSelectedUser = globals.users[0];
 
-  String? taskName;
-  String? taskDescription;
-  Category? taskCategory;
+  String? selectedName;
+  String? selectedDescription;
+  Category? selectedCategory;
   DateTime? selectedDate;
   TimeOfDay? selectedHour;
-  bool? reminder;
-  int? score; // the value is the default one
-  User? taskUser;
+  bool? selectedReminder;
+  int? selectedScore; // the value is the default one
+  User? selectedUser;
 
-  void updateScore(int newScore) {
+  MediaQueryData? queryData;
+  double screenWidth = 0;
+  double screenHeight = 0;
+
+  void updateSelectedScore(int newScore) {
     setState(() {
-      score = newScore;
+      selectedScore = newScore;
     });
   }
 
@@ -50,9 +55,15 @@ class TaskScreenState extends State<TaskScreen> {
         builder: (context, child) {
           return Theme(
             data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.dark(
+                primary: Colors.amber,
+                onPrimary: Colors.black,
+                onSurface: Colors.black,
+                surface: Colors.white,
+              ),
               textButtonTheme: TextButtonThemeData(
                 style: TextButton.styleFrom(
-                  primary: Colors.black,
+                  primary: Colors.black, // button text color
                 ),
               ),
             ),
@@ -64,9 +75,10 @@ class TaskScreenState extends State<TaskScreen> {
         firstDate: DateTime.now(),
         lastDate: DateTime(2101));
     setState(() {
-      selectedDate = picked!;
-      //TODO: add validation?
-      debugPrint(selectedDate.toString() + " selected!");
+      if (picked != null) {
+        selectedDate = picked;
+        debugPrint(selectedDate.toString() + " selected!");
+      }
     });
   }
 
@@ -91,19 +103,25 @@ class TaskScreenState extends State<TaskScreen> {
         context: context,
         initialTime: TimeOfDay.now());
     setState(() {
-      selectedHour = picked!;
-      //TODO: add validation? mi sa non serve perché di base c'è il min-start value da ora in poi
-      debugPrint(selectedHour.toString() + " selected!");
+      if (picked != null) {
+        selectedHour = picked;
+        //TODO: add validation?
+        debugPrint(selectedHour.toString() + " selected!");
+      }
     });
   }
 
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
-    final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
     if (widget.mode == "Modify") {
       _initializeModifyModeValues(widget.taskToModify!);
     }
+
+    queryData = MediaQuery.of(context);
+    screenWidth = queryData!.size.width;
+    screenHeight = queryData!.size.height;
 
     return Scaffold(
       resizeToAvoidBottomInset: false, // avoid keyboard to push up widgets
@@ -127,7 +145,7 @@ class TaskScreenState extends State<TaskScreen> {
                         selectedCategory: _getSelectedCategory()!,
                         onChange: (Category val) {
                           setState(() {
-                            taskCategory = val;
+                            selectedCategory = val;
                           });
                         },
                       ),
@@ -137,22 +155,23 @@ class TaskScreenState extends State<TaskScreen> {
                 Padding(
                   padding: const EdgeInsets.only(left: 20, right: 20),
                   child: TextFormField(
-                      initialValue: taskName,
+                      initialValue: selectedName,
                       onSaved: (String? value) {
-                        setState(() {});
+                        setState(() {
+                        });
                       },
                       onChanged: (String? value) {
-                        taskName = value;
+                        selectedName = value;
                       },
-                      maxLength: 50,
+                      maxLength: globals.taskNameMaxLen,
                       validator: (String? value) {
-                        final validCharacters = RegExp(r'^[a-zA-Z0-9]+$');
+                        final validCharacters = globals.taskNameValidChars;
                         if (value == null || value.isEmpty) {
                           return 'Please enter some text!';
                         } else if (!validCharacters.hasMatch(value.replaceAll(' ', ''))) {
                           return 'Invalid characters!';
                         } else {
-                          taskName = value;
+                          selectedName = value;
                           return null;
                         }
                       },
@@ -163,22 +182,23 @@ class TaskScreenState extends State<TaskScreen> {
                 Padding(
                   padding: const EdgeInsets.only(left: 20, right: 20),
                   child: TextFormField(
-                      initialValue: taskDescription,
+                      initialValue: selectedDescription,
                       onSaved: (String? value) {
                         setState(() {});
                       },
                       onChanged: (String? value) {
-                        taskDescription = value;
+                        selectedDescription = value;
                       },
-                      maxLength: 150,
+                      maxLength: globals.taskDescMaxLen,
                       validator: (String? value) {
-                        final validCharacters = RegExp(r'^[a-zA-Z0-9]+$');
+                        final validCharacters = globals.taskDescValidChars;
                         if (value == null || value.isEmpty) {
-                          return 'Please enter some text!';
+                          selectedDescription = "";
+                          return null;
                         } else if (!validCharacters.hasMatch(value.replaceAll(' ', ''))) {
                           return 'Invalid characters!';
                         } else {
-                          taskDescription = value;
+                          selectedDescription = value;
                           return null;
                         }
                       },
@@ -198,11 +218,14 @@ class TaskScreenState extends State<TaskScreen> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        ElevatedButton(
-                            onPressed: () {
-                              _selectDate(context);
-                            },
-                            child: Text(_dateToString(_getSelectedDate()!))),
+                        Container(
+                          height: screenHeight*0.0425,
+                          child: ElevatedButton(
+                              onPressed: () {
+                                _selectDate(context);
+                              },
+                              child: Text(_dateToString(_getSelectedDate()!))),
+                        ),
                       ],
                     ),
                   ),
@@ -219,11 +242,14 @@ class TaskScreenState extends State<TaskScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ElevatedButton(
-                          onPressed: () {
-                            _selectHour(context);
-                          },
-                          child: Text(_hourToString(_getSelectedHour()!))),
+                      Container(
+                        height: screenHeight*0.0425,
+                        child: ElevatedButton(
+                            onPressed: () {
+                              _selectHour(context);
+                            },
+                            child: Text(_hourToString(_getSelectedHour()!))),
+                      ),
                     ],
                   ),
                 ),
@@ -239,7 +265,8 @@ class TaskScreenState extends State<TaskScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ElevatedButton(onPressed: () {}, child: Text("No")),
+                      Container(
+                          height: screenHeight*0.0425,child: ElevatedButton(onPressed: () {}, child: Text("No"))),
                     ],
                   ),
                 ),
@@ -255,14 +282,17 @@ class TaskScreenState extends State<TaskScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              reminder = !_getReminderValue()!;
-                              debugPrint("Reminder selection: " + reminder.toString());
-                            });
-                          },
-                          child: Text(_boolToYesNo(_getReminderValue()))),
+                      Container(
+                        height: screenHeight*0.0425,
+                        child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                selectedReminder = !_getReminderValue()!;
+                                debugPrint("Reminder selection: " + selectedReminder.toString());
+                              });
+                            },
+                            child: Text(_boolToYesNo(_getReminderValue()))),
+                      ),
                     ],
                   ),
                 ),
@@ -275,12 +305,11 @@ class TaskScreenState extends State<TaskScreen> {
                   title: DropDownUsers(
                     onChange: (User val) {
                       setState(() {
-                        taskUser = val;
+                        selectedUser = val;
                       });
                     },
                     selectedUser: _getSelectedUser()!,
                   ),
-
                 ),
                 const Divider(),
                 ListTile(
@@ -296,8 +325,8 @@ class TaskScreenState extends State<TaskScreen> {
                     formKey: _formKey,
                     onChange: (int val) {
                       setState(() {
-                        updateScore(val);
-                        debugPrint("score selected for task:" + score.toString());
+                        updateSelectedScore(val);
+                        debugPrint("score selected for task:" + selectedScore.toString());
                       });
                     },
                   ),
@@ -331,11 +360,11 @@ class TaskScreenState extends State<TaskScreen> {
                         if (_formKey.currentState!.validate()) {
                           if (widget.mode == "Add") {
                             setState(() {
-                              createNewTask(taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!);
+                              createNewTask(selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!);
                             });
                           }
                           if (widget.mode == "Add") {
-                            showPopUpMessage(context, _getRandomConfirmationEmoji() + " Task created!", null, additionalPops: 1);
+                            showPopUpMessage(context, _getRandomConfirmationEmoji(),"Task created!", null, additionalPops: 1);
                           } else if (widget.mode == "Modify") {
                             showDialog(
                                 context: context,
@@ -364,9 +393,9 @@ class TaskScreenState extends State<TaskScreen> {
                                               heroTag: "ConfirmModify",
                                               onPressed: () {
                                                 debugPrint("Task modify confirmed!");
-                                                modifyTask(widget.taskToModify!, taskName!, taskDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!);
+                                                modifyTask(widget.taskToModify!, selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!);
                                                 Navigator.of(context).pop();
-                                                showPopUpMessage(context, "✅ Task modified!", null, additionalPops: 1);
+                                                showPopUpMessage(context, "✅","Task modified!", null, additionalPops: 1);
                                               },
                                               tooltip: "Confirm",
                                               child: const Icon(Icons.check),
@@ -420,18 +449,18 @@ class TaskScreenState extends State<TaskScreen> {
   }
 
   bool? _getReminderValue() {
-    if (reminder == null) {
-      return startingReminder;
+    if (selectedReminder == null) {
+      return startingSelectedReminder;
     } else {
-      return reminder;
+      return selectedReminder;
     }
   }
 
   User? _getSelectedUser() {
-    if (taskUser == null) {
-      return startingUser;
+    if (selectedUser == null) {
+      return startingSelectedUser;
     } else {
-      return taskUser;
+      return selectedUser;
     }
   }
 
@@ -456,29 +485,29 @@ class TaskScreenState extends State<TaskScreen> {
   }
 
   Category? _getSelectedCategory() {
-    if (taskCategory == null) {
-      return startingTaskCategory;
+    if (selectedCategory == null) {
+      return startingSelectedCategory;
     } else {
-      return taskCategory;
+      return selectedCategory;
     }
   }
 
   void _initializeModifyModeValues(Task task) {
-    taskName = task.name;
-    taskDescription = task.description;
-    startingTaskCategory = task.category;
+    selectedName = task.name;
+    selectedDescription = task.description;
+    startingSelectedCategory = task.category;
     startingSelectedDate = task.dateLimit;
     startingSelectedHour = task.timeLimit;
-    startingReminder = false; // TODO: ee
-    startingScore = task.score;
-    startingUser = task.user;
+    startingSelectedReminder = false; // TODO: reminder not implemented
+    startingSelectedScore = task.score;
+    startingSelectedUser = task.user;
   }
 
   int? _getSelectedScore() {
-    if (score == null) {
-      return startingScore;
+    if (selectedScore == null) {
+      return startingSelectedScore;
     } else {
-      return score;
+      return selectedScore;
     }
   }
 
@@ -499,24 +528,34 @@ class CategoryDropDownSelector extends StatefulWidget {
 }
 
 typedef void categoryCallback(Category val);
+
 typedef void userCallback(User val);
 
 class CategoryDropDownSelectorState extends State<CategoryDropDownSelector> {
+  MediaQueryData? queryData;
+  double screenHeight = 0;
+
   @override
   Widget build(BuildContext context) {
+    queryData = MediaQuery.of(context);
+    screenHeight = queryData!.size.height;
+
     return SizedBox(
-      height: 40,
+      height: screenHeight*0.0475,
       child: Card(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(100.0),
+          borderRadius: BorderRadius.circular(1000.0),
         ),
         child: DropdownButtonHideUnderline(
             child: Padding(
-          padding: const EdgeInsets.only(left: 10),
+          padding: const EdgeInsets.only(left: 12,right:2),
           child: DropdownButton<String>(
-              style: const TextStyle(color: Colors.black),
+              style: const TextStyle(color: Colors.black,fontSize: 16),
               value: serializeCategory(widget.selectedCategory),
-              icon: const Icon(Icons.arrow_drop_down),
+              icon: Padding(
+                padding: const EdgeInsets.all(3.0),
+                child: const Icon(Icons.arrow_drop_down),
+              ),
               onChanged: (String? newValue) {
                 setState(() {
                   widget.selectedCategory = decodeSerializedCategory(newValue!);
@@ -536,7 +575,9 @@ List<DropdownMenuItem<String>> get selectedCategoryDropdownItems {
   if (globals.categories.isNotEmpty) {
     for (var i = 0; i < globals.categories.length; i++) {
       String encoded = serializeCategory(globals.categories[i]);
-      items.add(DropdownMenuItem(child: Text(encoded), value: encoded),);
+      items.add(
+        DropdownMenuItem(child: Text(encoded), value: encoded),
+      );
     }
   }
   return items;
@@ -565,49 +606,58 @@ class DropDownUsers extends StatefulWidget {
 
   User selectedUser;
   final userCallback onChange;
-  Color color = Colors.black;
+  final Color color = Colors.black;
 
   @override
   State<DropDownUsers> createState() => _DropDownUsersState();
 }
 
 class _DropDownUsersState extends State<DropDownUsers> {
+  MediaQueryData? queryData;
+  double screenHeight = 0;
+
   @override
   Widget build(BuildContext context) {
+
+    queryData = MediaQuery.of(context);
+    screenHeight = queryData!.size.height;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text("User"),
         Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(5.0)),
-          color: Colors.white,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 4.0, right: 4.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              DropdownButton<String>(
-                  //dropdownColor: const Color.fromRGBO(42, 42, 42, 1),
-                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                  value: serializeUser(widget.selectedUser),
-                  icon: null,
-                  underline: Container(
-                    height: 0,
-                  ),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      widget.selectedUser = decodeSerializedUser(newValue!);
-                      widget.onChange(decodeSerializedUser(newValue));
-                    });
-                  },
-                  onTap: () {},
-                  items: selectedUserDropdownItems(widget.color)),
-            ],
+          height: screenHeight*0.0425,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(5.0)),
+            color: Colors.white,
           ),
-        ),
-        )],
+          child: Padding(
+            padding: const EdgeInsets.only(left: 4.0, right: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                DropdownButton<String>(
+                    //dropdownColor: const Color.fromRGBO(42, 42, 42, 1),
+                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                    value: serializeUser(widget.selectedUser),
+                    icon: null,
+                    underline: Container(
+                      height: 0,
+                    ),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        widget.selectedUser = decodeSerializedUser(newValue!);
+                        widget.onChange(decodeSerializedUser(newValue));
+                      });
+                    },
+                    onTap: () {},
+                    items: selectedUserDropdownItems(widget.color)),
+              ],
+            ),
+          ),
+        )
+      ],
     );
   }
 }

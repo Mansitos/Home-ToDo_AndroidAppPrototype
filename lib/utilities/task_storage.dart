@@ -34,9 +34,6 @@ class TasksStorage {
   Future<File> saveTasksToFile(List<Task> tasks) async {
     final file = await _localTasksFile;
 
-    // Updating globals entry TODO: useless, remove?
-    // globals.tasks = tasks;
-
     String encode = "";
     if (tasks.isNotEmpty) {
       for (int i = 0; i <= tasks.length - 1; i++) {
@@ -61,7 +58,8 @@ class TasksStorage {
 
       if(contents != "") {
         for (var i = 0; i < encodedTasks.length; i++) {
-          tasks.add(decodeSerializedTask(encodedTasks[i]));
+          String encodedTask = encodedTasks[i];
+          tasks.add(await decodeSerializedTask(encodedTask));
         }
       }
 

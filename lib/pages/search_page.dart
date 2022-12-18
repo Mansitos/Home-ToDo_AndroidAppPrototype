@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+// Main Widget of the Advanced Search Page
 class SearchScreen extends StatefulWidget {
-
   SearchScreen({Key? key}) : super(key: key);
 
   @override

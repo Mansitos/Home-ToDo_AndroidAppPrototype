@@ -2,10 +2,9 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/pop_up_message.dart';
+import 'package:home_to_do/custom_widgets/user_form_dialog.dart';
 import 'package:home_to_do/data_types/user.dart';
-import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/utilities/users_utilities.dart' as users;
-import 'package:home_to_do/utilities/globals.dart' as globals;
 
 class UserTileWidget extends StatefulWidget {
   const UserTileWidget({Key? key, required this.user, required this.onChange}) : super(key: key);
@@ -34,10 +33,7 @@ class UserTileWidgetState extends State<UserTileWidget> {
           });
         },
         child: TextButton(
-          style: TextButton.styleFrom(
-            primary: Colors.white,
-            textStyle: TextStyle(fontSize: 20)
-          ),
+          style: TextButton.styleFrom(primary: Colors.white, textStyle: TextStyle(fontSize: 20)),
           onLongPress: () {
             showMenu(
                 context: context,
@@ -84,7 +80,8 @@ class UserTileWidgetState extends State<UserTileWidget> {
                                             users.deleteUser(widget.user).then((_) => setState(() {}));
                                             widget.onChange();
                                             Navigator.of(context).pop();
-                                            showPopUpMessage(context, _getUserDeleteMessage(), null);
+                                            List<String> message = _getUserDeleteMessage();
+                                            showPopUpMessage(context, message[0], message[1], null);
                                           },
                                           tooltip: "Confirm",
                                           child: const Icon(Icons.delete),
@@ -116,7 +113,21 @@ class UserTileWidgetState extends State<UserTileWidget> {
                       // Navigator.pop close the pop-up while showing the dialog.
                       // We have to wait till the animations finish, and then open the dialog.
                       WidgetsBinding.instance?.addPostFrameCallback((_) {
-                        // MODIFY LOGIC....
+                        setState(() {
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return UserDialogForm(
+                                  modifyMode: true,
+                                  userToModify: widget.user,
+                                  onChange: () {
+                                    setState(() {
+                                      widget.onChange();
+                                    });
+                                  },
+                                );
+                              }).then((_) => setState(() {}));
+                        });
                       });
                     },
                     value: 1,
@@ -126,20 +137,39 @@ class UserTileWidgetState extends State<UserTileWidget> {
                         Text("Modify"),
                       ],
                     ),
-                  )
+                  ),
                 ]);
           },
           onPressed: () {},
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [Expanded(
+            children: [
+              Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 2, bottom: 2),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          child: ClipOval(
+                            child: SizedBox.fromSize(
+                              size: Size.fromRadius(18),
+                              child: widget.user.image == null
+                                  ? Image.asset(
+                                      "lib/assets/user_images/default_user_img.png",
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.file(
+                                      widget.user.image!,
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
+                          )),
                       Text(
-                        widget.user.name,),
+                        widget.user.name,
+                      ),
                       Text(widget.user.score.toString() + " ⭐"),
                     ],
                   ),
@@ -152,13 +182,17 @@ class UserTileWidgetState extends State<UserTileWidget> {
     );
   }
 
-  String _getUserDeleteMessage() {
-    List<String> deletionEmojis = [
-      "❌",
-    ];
-    String defaultDeleteMessage = deletionEmojis[Random().nextInt(deletionEmojis.length)] + " User deleted!";
+  List<String> _getUserDeleteMessage() {
+    List<String> deletionEmojis = ["❌"];
+    List<String> defaultDeleteMessage = [deletionEmojis[Random().nextInt(deletionEmojis.length)], " User deleted!"];
     bool useDefaultMessage = Random().nextBool();
-    List<String> deletionMessages = ["👽 User kidnapped by aliens!", "👽 User disappeared!", "👻 User disappeared!", "🦁 User eaten by developers lion!", "🚀 User sent on a space mission!"];
+    List<List<String>> deletionMessages = [
+      ["👽", "User kidnapped by aliens!"],
+      ["👽", "User disappeared!"],
+      ["👻", "User disappeared!"],
+      ["🦁", "User eaten by developers lion!"],
+      ["🚀", "User sent on a space mission!"]
+    ];
     if (useDefaultMessage) {
       return defaultDeleteMessage;
     } else {

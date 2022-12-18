@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/category_form_dialog.dart';
@@ -8,6 +6,7 @@ import 'package:home_to_do/data_types/category.dart';
 import '/utilities/globals.dart' as globals;
 import '/utilities/categories_utilities.dart' as categories;
 
+// Main Widget of the Categories Page
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({Key? key}) : super(key: key);
 
@@ -19,6 +18,7 @@ class CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       drawerEnableOpenDragGesture: false,
       appBar: AppBar(
         automaticallyImplyLeading: true,
@@ -42,6 +42,7 @@ class CategoriesScreenState extends State<CategoriesScreen> {
     );
   }
 
+  // Just a widget selector
   Widget _categoryPageMainWidgetBuilder() {
     if (globals.categories.length > 1) {
       return CategoriesGridVisualizer();
@@ -50,6 +51,7 @@ class CategoriesScreenState extends State<CategoriesScreen> {
     }
   }
 
+  // Main Widget in case of no categories to visualize
   Widget _noCategoriesWidgetBuilder() {
     return Center(
         child: Padding(
@@ -58,12 +60,12 @@ class CategoriesScreenState extends State<CategoriesScreen> {
         height: 300,
         child: Column(
           children: const [
-            Text("No categories found!", style: TextStyle(fontSize: 22, color: Colors.white)),
+            Text("No categories found!", style: TextStyle(fontSize: 24, color: Colors.white)),
             Padding(
               padding: EdgeInsets.all(12),
-              child: Text("😭",
+              child: Text("😥",
                   style: TextStyle(
-                    fontSize: 75,
+                    fontSize: 70,
                   )),
             ),
             Text(
@@ -79,10 +81,9 @@ class CategoriesScreenState extends State<CategoriesScreen> {
       ),
     ));
   }
-
-// 🍔
 }
 
+// Categories Grid Visualizer
 class CategoriesGridVisualizer extends StatefulWidget {
   const CategoriesGridVisualizer({Key? key}) : super(key: key);
 
@@ -93,16 +94,14 @@ class CategoriesGridVisualizer extends StatefulWidget {
 class CategoriesGridVisualizerState extends State<CategoriesGridVisualizer> {
   var additionalBordersPad = 4.0;
   late Offset _tapDownPosition;
-  final List<Category> categoriesList = globals.categories.sublist(1);
+  final List<Category> categoriesList = globals.categories.sublist(1); // first is removed: because the default one
 
   @override
   Widget build(BuildContext context) {
     List<Category> categoriesList = globals.categories.sublist(1);
 
     return GridView.count(
-      // Create a grid with n columns.
       crossAxisCount: 2,
-      // Generate widgets that display their index in the List.
       children: List.generate(categoriesList.length, (index) {
         return Theme(
           data: ThemeData(textTheme: Theme.of(context).textTheme.apply(bodyColor: Colors.white)),
@@ -141,7 +140,6 @@ class CategoriesGridVisualizerState extends State<CategoriesGridVisualizer> {
                                     showDialog(
                                         context: context,
                                         builder: (BuildContext context) {
-
                                           return AlertDialog(
                                             title: const Text("🔥 Confirm category delete?"),
                                             content: const Text("Tasks from this category will be moved to default category \"🏠 All\".\nYou can't undo this operation"),
@@ -169,7 +167,7 @@ class CategoriesGridVisualizerState extends State<CategoriesGridVisualizer> {
                                                         debugPrint("Category Delete confirmed!");
                                                         categories.deleteCategory(index + 1).then((_) => setState(() {}));
                                                         Navigator.of(context).pop();
-                                                        showPopUpMessage(context, "💣 Category deleted!",null);
+                                                        showPopUpMessage(context, "💣","Category deleted!", null);
                                                       },
                                                       tooltip: "Confirm",
                                                       child: const Icon(Icons.delete),
@@ -231,11 +229,14 @@ class CategoriesGridVisualizerState extends State<CategoriesGridVisualizer> {
                           children: [
                             Text(
                               categoriesList[index].emoji,
-                              style: const TextStyle(fontSize: 35),
+                              style: const TextStyle(fontSize: 50),
+                            ),
+                            Container(
+                              height: 7,
                             ),
                             Text(
                               categoriesList[index].name,
-                              style: const TextStyle(fontSize: 20),
+                              style: const TextStyle(fontSize: 24),
                             ),
                           ],
                         )),

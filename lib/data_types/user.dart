@@ -1,24 +1,34 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:home_to_do/utilities/users_utilities.dart' as users;
+
 class User {
   User({required this.name, required this.score});
 
   String name;
-  String image = "temp/path";
+  File? image;
   int score;
 
 
   @override
   String toString() {
-    return name;
+    bool hasImage = (image != null);
+    return name+"("+score.toString()+"⭐)"+"hasImage:"+hasImage.toString();
   }
 
-  void addScore(int add){
-    this.score = this.score + add;
+  Future<void> addScore(int add) async {
+    debugPrint(" > User " + name + " received " + add.toString() + "⭐");
+    int newScore = score+add;
+    await users.modifyUserByName(name, name, newScore, image);
   }
 
-  void removeScore(int remove){
-    this.score = this.score - remove;
-    if(this.score < 0){
-      this.score = 0;
+  Future<void> removeScore(int remove) async {
+    int newScore = score - remove;
+    if(newScore < 0){
+      newScore = 0;
     }
+    score = newScore;
+    debugPrint(" > User " + name + " lost " + remove.toString() + "⭐");
+    await users.modifyUserByName(name, name, newScore, image);;
   }
 }

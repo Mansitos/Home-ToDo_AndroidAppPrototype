@@ -23,13 +23,20 @@ List<User> users = [];
 // Global settings global variables
 final GlobalSettingsStorage globalSettingsStorage = GlobalSettingsStorage();
 bool popUpMessagesEnabled = true;
+bool compactTaskListViewEnabled = false;
 
 // Development global variables
-bool debugMode = true;
+bool debugMode = false;
+
+// Internal variables
+RegExp taskNameValidChars = RegExp(r'^[a-zA-Z0-9,,]+$');
+int taskNameMaxLen = 50;
+RegExp taskDescValidChars = RegExp(r'^[a-zA-Z0-9,,]+$');
+int taskDescMaxLen = 200;
 
 generateUniqueTaskID() {
   // Updating the last used unique task ID!
   lastUniqueGeneratedID = lastUniqueGeneratedID += 1;
-  globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: lastUniqueGeneratedID, popUpMessagesEnabled: popUpMessagesEnabled));
+  globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: lastUniqueGeneratedID, popUpMessagesEnabled: popUpMessagesEnabled, compactTaskListViewEnabled: compactTaskListViewEnabled));
   return lastUniqueGeneratedID;
 }

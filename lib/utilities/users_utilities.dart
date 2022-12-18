@@ -1,47 +1,73 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/data_types/task.dart';
 import 'globals.dart' as globals;
 
-void createNewUser(String name) {
+Future<void> createNewUser(String name, File? image) async {
   User newUser = User(name: name, score: 0);
   globals.users.add(newUser);
+  if (image != null) {
+    await globals.usersStorage.saveUserImage(name, image);
+    newUser.image = image;
+  }
   debugPrint("\n > New User saved!\n" + serializeUser(newUser));
-  globals.usersStorage.saveUsersToFile(globals.users);
+  await globals.usersStorage.saveUsersToFile(globals.users);
 }
 
-Future<void> modifyUser(int index, String name) async {
-  User modified = User(name: name, score : globals.users[index].score);
-  debugPrint("\n > Modify class with index " + index.toString());
+Future<void> modifyUserByName(String oldName, String newName, int oldScore, File? newImage) async {
+  int index = getIndexOfUserByName(oldName);
   User oldUser = globals.users[index];
-  globals.users[index] = modified;
+  File? oldImage = oldUser.image;
+  User newUser = User(name: newName, score: oldScore);
+
+  if (newImage != null) {
+    // ... there is a new image
+    debugPrint("NEW IMAGE CASE!");
+    await globals.usersStorage.deleteUserImage(oldName); // ...then delete the old one
+    await globals.usersStorage.saveUserImage(newName, newImage); // ... save the new one
+    newUser.image = newImage;
+  } else if (oldUser.image != null) {
+    // ... there were an image, re-use it
+    debugPrint("OLD IMAGE CASE!");
+    await globals.usersStorage.updateUserImageFilename(oldName, newName); // rename image
+    newUser.image = oldUser.image;
+  } else {
+    // no image at all...
+  }
+  globals.users[index] = newUser; // Swap old user with new one
+  debugPrint("\n > Modified user with index " + index.toString());
   debugPrint("Now users are: " + globals.users.toString());
-  globals.usersStorage.saveUsersToFile(globals.users);
-  _updateTaskWithMatchingUser(oldUser,modified);
+  _updateTaskWithMatchingUser(oldUser, index);
+  await globals.usersStorage.saveUsersToFile(globals.users);
 }
 
-void _updateTaskWithMatchingUser(User oldUser, User newUser) {
+Future<void> _updateTaskWithMatchingUser(User oldUser, int newUserIndex) async {
   List<Task> tasks = globals.tasks;
-  int count = 0;
-  for(int i = 0;i<=tasks.length-1;i++){
+  for (int i = 0; i <= tasks.length - 1; i++) {
     Task task = tasks[i];
-    if(task.user.toString() == oldUser.toString()){
-      count++;
-      task.user = newUser;
+    if (task.user.name == oldUser.name) {
+      task.user = globals.users[newUserIndex];
+    }
+    if (task.getUserThatCompleted() != null && task.getUserThatCompleted()!.name == oldUser.name) {
+      task.setUserThatCompleted(globals.users[newUserIndex]);
     }
   }
-  debugPrint(" > "+count.toString()+ " tasks modified due to User modify process.");
+  debugPrint(" > Tasks modified due to User modify process.");
+  await globals.tasksStorage.saveTasksToFile(globals.tasks);
 }
 
 Future<void> deleteUser(User user) async {
+  // TODO: delete image file!
   debugPrint("\n > Delete class with name: " + user.name);
   int index = getIndexOfUserByName(user.name);
   User oldUser = globals.users[index];
   globals.users.removeAt(index);
+  globals.usersStorage.deleteUserImage(oldUser.name);
   debugPrint("Now users are: " + globals.users.toString());
-  globals.usersStorage.saveUsersToFile(globals.users);
-  _updateTaskWithMatchingUser(oldUser,globals.users[0]);
+  _updateTaskWithMatchingUser(oldUser, 0);
+  await globals.usersStorage.saveUsersToFile(globals.users);
 }
 
 int getIndexOfUserByName(String name) {
@@ -54,14 +80,14 @@ int getIndexOfUserByName(String name) {
 }
 
 User decodeSerializedUser(String encode) {
-  List<String> data = encode.split(';');
-  String name  = data[0];
+  List<String> data = encode.split('/');
+  String name = data[0];
   int score = int.parse(data[1]);
   return User(name: name, score: score);
 }
 
 String serializeUser(User user) {
-  return user.name + ";" + user.score.toString();
+  return user.name + "/" + user.score.toString();
 }
 
 bool checkIfUserNameAvailable(String name, String emoji, String mask, bool maskMode) {
