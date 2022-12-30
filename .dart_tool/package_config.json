@@ -26,6 +26,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "calendar_date_picker2",
+      "rootUri": "file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/calendar_date_picker2-0.3.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.16"
+    },
+    {
       "name": "characters",
       "rootUri": "file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/characters-1.2.1",
       "packageUri": "lib/",
@@ -182,12 +188,6 @@
       "languageVersion": "2.12"
     },
     {
-      "name": "intl",
-      "rootUri": "file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/intl-0.18.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "js",
       "rootUri": "file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/js-0.6.4",
       "packageUri": "lib/",
@@ -326,18 +326,6 @@
       "languageVersion": "2.12"
     },
     {
-      "name": "syncfusion_flutter_core",
-      "rootUri": "file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/syncfusion_flutter_core-20.3.61",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
-      "name": "syncfusion_flutter_datepicker",
-      "rootUri": "file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/syncfusion_flutter_datepicker-20.3.61",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "term_glyph",
       "rootUri": "file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/term_glyph-1.2.1",
       "packageUri": "lib/",
@@ -392,7 +380,7 @@
       "languageVersion": "2.12"
     }
   ],
-  "generated": "2022-12-18T10:53:02.015450Z",
+  "generated": "2022-12-27T19:05:49.472808Z",
   "generator": "pub",
   "generatorVersion": "2.18.6"
 }

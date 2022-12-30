@@ -12,12 +12,9 @@ class UserScreen extends StatefulWidget {
 }
 
 class UserScreenState extends State<UserScreen> {
-
-  void refresh(){
-    setState(() {
-    });
+  void refresh() {
+    setState(() {});
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -69,10 +66,7 @@ class UserScreenState extends State<UserScreen> {
   }
 }
 
-Widget _usersListWidgetBuilder(
-  context,
-  void Function() callback,
-) {
+Widget _usersListWidgetBuilder(context, void Function() callback) {
   return ListView(
     shrinkWrap: true,
     scrollDirection: Axis.vertical,
@@ -130,9 +124,12 @@ class PodiumWidget extends StatefulWidget {
   State<PodiumWidget> createState() => PodiumWidgetState();
 }
 
-Widget _usersPageMainWidgetBuilder(BuildContext context, void Function() callback,) {
+Widget _usersPageMainWidgetBuilder(
+  BuildContext context,
+  void Function() callback,
+) {
   if (globals.users.length > 1) {
-    return  _usersListWidgetBuilder(context, callback);
+    return _usersListWidgetBuilder(context, callback);
   } else {
     return _noUsersWidgetBuilder();
   }
@@ -141,33 +138,33 @@ Widget _usersPageMainWidgetBuilder(BuildContext context, void Function() callbac
 Widget _noUsersWidgetBuilder() {
   return Center(
       child: Padding(
-        padding: const EdgeInsets.all(50),
-        child: SizedBox(
-          height: 300,
-          child: Column(
-            children: const [
-              Text("No users found!", style: TextStyle(fontSize: 24, color: Colors.white)),
-              Padding(
-                padding: EdgeInsets.all(12),
-                child: Center(
-                  child: Text("👻",
-                      style: TextStyle(
-                        fontSize: 70,
-                      )),
-                ),
-              ),
-              Text(
-                "Try to create a new user by pressing the + button at the bottom right!",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+    padding: const EdgeInsets.all(50),
+    child: SizedBox(
+      height: 300,
+      child: Column(
+        children: const [
+          Text("No users found!", style: TextStyle(fontSize: 24, color: Colors.white)),
+          Padding(
+            padding: EdgeInsets.all(12),
+            child: Center(
+              child: Text("👻",
+                  style: TextStyle(
+                    fontSize: 70,
+                  )),
+            ),
           ),
-        ),
-      ));
+          Text(
+            "Try to create a new user by pressing the + button at the bottom right!",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ),
+  ));
 }
 
 class PodiumWidgetState extends State<PodiumWidget> {
@@ -205,22 +202,25 @@ class PodiumWidgetState extends State<PodiumWidget> {
                     Container(
                         padding: widget.usersList.length >= 2 ? EdgeInsets.all(2) : null,
                         decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                        child: widget.usersList.length >= 2 ? ClipOval(
-                          child: SizedBox.fromSize(
-                            size: Size.fromRadius(20),
-                            child: widget.usersList[1].image == null
-                                ? Image.asset(
-                              "lib/assets/user_images/default_user_img.png",
-                              fit: BoxFit.cover,
-                            )
-                                : Image.file(
-                              widget.usersList[1].image!,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ) : Container()),
-                    Container(height: 3,),
-
+                        child: widget.usersList.length >= 2
+                            ? ClipOval(
+                                child: SizedBox.fromSize(
+                                  size: Size.fromRadius(20),
+                                  child: widget.usersList[1].image == null
+                                      ? Image.asset(
+                                          "lib/assets/user_images/default_user_img.png",
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.file(
+                                          widget.usersList[1].image!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                ),
+                              )
+                            : Container()),
+                    Container(
+                      height: 3,
+                    ),
                     Text(
                       widget.usersList.length >= 2 ? widget.usersList[1].name : "",
                       style: TextStyle(color: Colors.white, fontSize: 15),
@@ -258,22 +258,25 @@ class PodiumWidgetState extends State<PodiumWidget> {
                     Container(
                         padding: widget.usersList.length >= 1 ? EdgeInsets.all(2) : null,
                         decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                        child: widget.usersList.length >= 1 ? ClipOval(
-                          child: SizedBox.fromSize(
-                            size: Size.fromRadius(20),
-                            child: widget.usersList[0].image == null
-                                ? Image.asset(
-                              "lib/assets/user_images/default_user_img.png",
-                              fit: BoxFit.cover,
-                            )
-                                : Image.file(
-                              widget.usersList[0].image!,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ) : Container()),
-                    Container(height: 3,),
-
+                        child: widget.usersList.length >= 1
+                            ? ClipOval(
+                                child: SizedBox.fromSize(
+                                  size: Size.fromRadius(20),
+                                  child: widget.usersList[0].image == null
+                                      ? Image.asset(
+                                          "lib/assets/user_images/default_user_img.png",
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.file(
+                                          widget.usersList[0].image!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                ),
+                              )
+                            : Container()),
+                    Container(
+                      height: 3,
+                    ),
                     Text(
                       widget.usersList.length >= 1 ? widget.usersList[0].name : "",
                       style: TextStyle(color: Colors.white, fontSize: 15),
@@ -308,25 +311,28 @@ class PodiumWidgetState extends State<PodiumWidget> {
                     child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-
                     Container(
                         padding: widget.usersList.length >= 3 ? EdgeInsets.all(2) : null,
                         decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                        child: widget.usersList.length >= 3 ? ClipOval(
-                          child: SizedBox.fromSize(
-                            size: Size.fromRadius(20),
-                            child: widget.usersList[2].image == null
-                                ? Image.asset(
-                              "lib/assets/user_images/default_user_img.png",
-                              fit: BoxFit.cover,
-                            )
-                                : Image.file(
-                              widget.usersList[2].image!,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ) : Container()),
-                    Container(height: 3,),
+                        child: widget.usersList.length >= 3
+                            ? ClipOval(
+                                child: SizedBox.fromSize(
+                                  size: Size.fromRadius(20),
+                                  child: widget.usersList[2].image == null
+                                      ? Image.asset(
+                                          "lib/assets/user_images/default_user_img.png",
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.file(
+                                          widget.usersList[2].image!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                ),
+                              )
+                            : Container()),
+                    Container(
+                      height: 3,
+                    ),
                     Text(
                       widget.usersList.length >= 3 ? widget.usersList[2].name : "",
                       style: TextStyle(color: Colors.white, fontSize: 15),

@@ -4,9 +4,10 @@ import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 
 class UserSelectionDropUpWidget extends StatefulWidget {
-  UserSelectionDropUpWidget({Key? key, required this.onUserSelected}) : super(key: key);
+  UserSelectionDropUpWidget({Key? key, required this.onUserSelected, required this.actuallySelectedUser}) : super(key: key);
 
   final userSelectedCallback onUserSelected;
+  User actuallySelectedUser;
 
   @override
   State<UserSelectionDropUpWidget> createState() => UserSelectionDropUpWidgetState();
@@ -15,7 +16,6 @@ class UserSelectionDropUpWidget extends StatefulWidget {
 typedef void userSelectedCallback(User user);
 
 class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
-  int selectedUserIndex = 0;
   bool isVisible = false;
 
   MediaQueryData? queryData;
@@ -41,10 +41,24 @@ class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
       visible: isVisible,
       child: Align(
         child: Container(
-          height: screenHeight * 0.275,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(screenWidth * 0.0425),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                spreadRadius: 0.05,
+                blurRadius: 6,
+                offset: Offset(0, 0), // changes position of shadow
+              ),
+            ],
+          ),
+          height: screenHeight * 0.305,
           width: screenWidth * 0.175,
           child: Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(screenWidth * 0.04)),
+            shape: RoundedRectangleBorder(
+              side: BorderSide(color: Colors.black87, width: 1.5),
+              borderRadius: BorderRadius.circular(screenWidth * 0.0425),
+            ),
             child: Padding(
               padding: EdgeInsets.only(left: screenWidth * 0.01, right: screenWidth * 0.01, top: screenWidth * 0.0025, bottom: screenWidth * 0.0025),
               child: Container(
@@ -65,6 +79,9 @@ class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
     List<Widget> userSelectors = [];
 
     for (int i = 0; i < globals.users.length; i++) {
+      User current_user = globals.users[i];
+      bool is_selected = current_user.name == widget.actuallySelectedUser.name;
+
       Widget selector = Padding(
           padding: EdgeInsets.all(screenWidth * 0.01),
           child: Column(
@@ -72,13 +89,19 @@ class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
               IconButton(
                 padding: EdgeInsets.zero,
                 icon: Container(
-                    padding: EdgeInsets.all(2),
-                    decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+                    padding: is_selected ? EdgeInsets.all(4) : EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: is_selected ? Colors.amber : Colors.black,
+                      shape: BoxShape.circle,
+                    ),
                     child: ClipOval(
-                      child: SizedBox.fromSize(size: Size.fromRadius(screenWidth * 0.05), child: _getUserImage(i)),
+                      child: SizedBox.fromSize(
+                        size: Size.fromRadius(screenWidth * 0.05),
+                        child: _getUserImage(current_user),
+                      ),
                     )),
                 onPressed: () {
-                  userSelected(globals.users[i]);
+                  userSelected(current_user);
                 },
                 style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
@@ -90,8 +113,8 @@ class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
                 height: 1,
               ),
               Text(
-                globals.users[i].name,
-                style: TextStyle(fontSize: 12),
+                current_user.name,
+                style: is_selected ? TextStyle(fontSize: 13) : TextStyle(fontSize: 12),
               )
             ],
           ));
@@ -101,21 +124,21 @@ class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
     return userSelectors;
   }
 
-  _getUserImage(int i) {
-    if (i == 0) {
+  _getUserImage(User current_user) {
+    if (current_user.name == globals.users[0].name) {
       return Image.asset(
         "lib/assets/user_images/default_users_img.png",
         fit: BoxFit.cover,
       );
     }
-    if (globals.users[i].image == null) {
+    if (current_user.image == null) {
       return Image.asset(
         "lib/assets/user_images/default_user_img.png",
         fit: BoxFit.cover,
       );
     } else {
       return Image.file(
-        globals.users[i].image!,
+        current_user.image!,
         fit: BoxFit.cover,
       );
     }

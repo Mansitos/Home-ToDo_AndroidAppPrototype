@@ -4,6 +4,8 @@ import 'package:home_to_do/data_types/global_settings.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 
+import 'generic_utilities.dart';
+
 class GlobalSettingsStorage {
   // Getting the local documents path
   Future<String> get _localPath async {
@@ -30,7 +32,7 @@ class GlobalSettingsStorage {
   Future<File> saveGlobalSettingsToFile(GlobalSettings settings) async {
     final file = await _localGlobalSettingsFile;
 
-    String encode = settings.lastUniqueGeneratedID.toString() + "|" + encodeBool(settings.popUpMessagesEnabled)  + "|" + encodeBool(settings.compactTaskListViewEnabled);
+    String encode = settings.lastUniqueGeneratedID.toString() + "|" + encodeBool(settings.popUpMessagesEnabled)  + "|" + encodeBool(settings.compactTaskListViewEnabled) + "|" + encodeBool(settings.alwaysShowExpiredTasks) + "|" + encodeBool(settings.autoMonthOldDelete);
 
     debugPrint("\n > Global Settings saved successfully! location/path: " + file.path);
     return file.writeAsString('$encode');
@@ -44,35 +46,18 @@ class GlobalSettingsStorage {
       List<String> data = contents.split('|');
 
       if(contents != "") {
-        GlobalSettings settings = GlobalSettings(lastUniqueGeneratedID: int.parse(data[0]), popUpMessagesEnabled: decodeBool(data[1]), compactTaskListViewEnabled: decodeBool(data[2]));
+        GlobalSettings settings = GlobalSettings(lastUniqueGeneratedID: int.parse(data[0]), popUpMessagesEnabled: decodeBool(data[1]), compactTaskListViewEnabled: decodeBool(data[2]), alwaysShowExpiredTasks: decodeBool(data[3]), autoMonthOldDelete: decodeBool(data[4]));
 
         globals.lastUniqueGeneratedID = settings.lastUniqueGeneratedID;
         globals.popUpMessagesEnabled = settings.popUpMessagesEnabled;
         globals.compactTaskListViewEnabled = settings.compactTaskListViewEnabled;
+        globals.alwaysShowExpiredTasks = settings.alwaysShowExpiredTasks;
+        globals.autoMonthOldDelete = settings.autoMonthOldDelete;
       }
       debugPrint(" > Global Settings loaded successfully!");
     } catch (e) {
       debugPrint(" > Error in loading Global Settings file!");
       debugPrint(e.toString());
     }
-  }
-}
-
-String encodeBool(bool val){
-  if(val == true){
-    return "true";
-  }else{
-    return "false";
-  }
-}
-
-bool decodeBool(String val){
-  if(val == "true"){
-    return true;
-  }else if(val == "false"){
-    return false;
-  }else{
-    debugPrint("Error in decoding encoded bool: " + val + "    false will be returned!");
-    return false;
   }
 }

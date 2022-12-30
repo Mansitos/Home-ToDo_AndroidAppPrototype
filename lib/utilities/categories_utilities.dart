@@ -2,9 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/data_types/category.dart';
 import 'package:home_to_do/data_types/task.dart';
+import 'package:home_to_do/utilities/generic_utilities.dart';
 import 'globals.dart' as globals;
 
 void createNewCategory(String name, String emoji) {
+  name = name.capitalize();
+
   Category newCategory = Category(name: name, emoji: emoji);
   globals.categories.add(newCategory);
   debugPrint("\n > New category saved!\n" + serializeCategory(newCategory));
@@ -12,6 +15,8 @@ void createNewCategory(String name, String emoji) {
 }
 
 Future<void> modifyCategory(int index, String name, String emoji) async {
+  name = name.capitalize();
+
   Category modified = Category(name: name, emoji: emoji);
   debugPrint("\n > Modify class with index " + index.toString());
   Category oldCategory = globals.categories[index];

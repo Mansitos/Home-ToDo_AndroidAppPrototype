@@ -3,6 +3,7 @@ import 'package:home_to_do/data_types/task.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 
+import '../utilities/generic_utilities.dart';
 import 'category.dart';
 
 class TaskFilter {
@@ -26,7 +27,7 @@ class TaskFilter {
 
       if (category != null) { // Filter by category...
         if (task.category.toString() == category.toString() || category.toString() == globals.categories[0].toString()) {
-          if (checkDateLimit(task)) { // Filter by date/time...
+          if (checkDateLimit(task, endDate, startingDate)) { // Filter by date/time...
             if (user!.name == globals.users[0].name || user!.name == task.user.name || task.user.name == globals.users[0].name) {
               filteredTasks.add(task);
             } else {
@@ -52,21 +53,6 @@ class TaskFilter {
     return filteredTasks;
   }
 
-  bool checkDateLimit(Task task) {
-    if (endDate == null) {
-      // It's not a range check.
-      return areSameDay(startingDate, task.dateLimit);
-    } else if ((task.dateLimit.isBefore(endDate!) || areSameDay(task.dateLimit, endDate!)) && (startingDate.isBefore(task.dateLimit)) || areSameDay(startingDate, task.dateLimit)) {
-      // It's a range check!
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  bool areSameDay(DateTime first, DateTime second) {
-    return (first.year == second.year && first.month == second.month && first.day == second.day);
-  }
 
   List<Task> _sortByDate(List<Task> filteredTasks) {
     int taskDateComparison(Task a, Task b) {

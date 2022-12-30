@@ -3,9 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/data_types/task.dart';
+import 'package:home_to_do/utilities/generic_utilities.dart';
 import 'globals.dart' as globals;
 
 Future<void> createNewUser(String name, File? image) async {
+  name = name.capitalize();
+
   User newUser = User(name: name, score: 0);
   globals.users.add(newUser);
   if (image != null) {
@@ -17,6 +20,8 @@ Future<void> createNewUser(String name, File? image) async {
 }
 
 Future<void> modifyUserByName(String oldName, String newName, int oldScore, File? newImage) async {
+  newName = newName.capitalize();
+
   int index = getIndexOfUserByName(oldName);
   User oldUser = globals.users[index];
   File? oldImage = oldUser.image;
@@ -24,13 +29,11 @@ Future<void> modifyUserByName(String oldName, String newName, int oldScore, File
 
   if (newImage != null) {
     // ... there is a new image
-    debugPrint("NEW IMAGE CASE!");
     await globals.usersStorage.deleteUserImage(oldName); // ...then delete the old one
     await globals.usersStorage.saveUserImage(newName, newImage); // ... save the new one
     newUser.image = newImage;
   } else if (oldUser.image != null) {
     // ... there were an image, re-use it
-    debugPrint("OLD IMAGE CASE!");
     await globals.usersStorage.updateUserImageFilename(oldName, newName); // rename image
     newUser.image = oldUser.image;
   } else {

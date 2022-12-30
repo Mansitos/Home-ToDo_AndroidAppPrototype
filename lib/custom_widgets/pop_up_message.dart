@@ -6,7 +6,7 @@ void showPopUpMessage(BuildContext context, String topMessage, String message, i
 // Animation time...
   if (globals.popUpMessagesEnabled == true) {
     Timer? _timer;
-    int _autoCloseTimer = 1000;
+    int _autoCloseTimer = 900;
 
     if (time != null) {
       _autoCloseTimer = time;
@@ -29,13 +29,13 @@ void showPopUpMessage(BuildContext context, String topMessage, String message, i
                   Text(
                     topMessage,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 45),
+                    style: TextStyle(fontSize: 50),
                   ),
-                  Container(height: 5),
+                  Container(height: 7),
                   Text(
                     message,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20),
+                    style: TextStyle(fontSize: 21),
                   ),
               ],
             ),

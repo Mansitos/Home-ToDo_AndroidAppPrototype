@@ -37,79 +37,90 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
           key: _formKey,
           child: SizedBox(
             height: 250,
-            child: Column(
-              children: [
-                TextFormField(
-                  style: const TextStyle(fontSize: 55),
-                  initialValue: (() {
-                    if (widget.modifyMode == true) {
-                      return oldCategoryEmoji;
-                    } else {
-                      return '';
-                    }
-                  }()),
-                  maxLength: 1,
-                  decoration: const InputDecoration(
-                    hintText: 'Type an emoji to use as icon!',
-                    labelText: 'Category Icon',
-                    labelStyle: TextStyle(fontSize: 16),
-                    hintStyle: TextStyle(fontSize: 16, color: Colors.black45),
-                  ),
-                  onSaved: (String? value) {
-                    setState(() {});
-                  },
-                  validator: (String? value) {
-                    // Emoji valid chars
-                    final RegExp REGEX_EMOJI = RegExp(r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
-                    print("old:" + oldCategoryName);
-                    print("actual:" + categoryName);
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                  textSelectionTheme: TextSelectionThemeData(
+                      selectionColor: Colors.amber)),
+              child: Column(
+                children: [
+                  TextFormField(
+                    cursorColor: Colors.amber,
+                    style: const TextStyle(fontSize: 55),
+                    initialValue: (() {
+                      if (widget.modifyMode == true) {
+                        return oldCategoryEmoji;
+                      } else {
+                        return '';
+                      }
+                    }()),
+                    maxLength: 1,
+                    decoration: const InputDecoration(
+                      hintText: 'Type an emoji to use as icon!',
+                      labelText: 'Category Icon',
+                      labelStyle: TextStyle(fontSize: 16, color: Colors.black45),
+                      hintStyle: TextStyle(fontSize: 16, color: Colors.black45),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black45)),
+                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
+                    ),
+                    onSaved: (String? value) {
+                      setState(() {});
+                    },
+                    validator: (String? value) {
+                      // Emoji valid chars
+                      final RegExp REGEX_EMOJI = RegExp(r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
+                      print("old:" + oldCategoryName);
+                      print("actual:" + categoryName);
 
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter an emoji!';
-                    } else if (!REGEX_EMOJI.hasMatch(value)) {
-                      return 'Only emoji are allowed!';
-                    } else if (!checkIfCategoryNameAvailable("", value, oldCategoryEmoji, widget.modifyMode)) {
-                      return 'Emoji already used!';
-                    } else {
-                      categoryEmoji = value;
-                      return null;
-                    }
-                  },
-                ),
-                TextFormField(
-                  style: TextStyle(fontSize: 18),
-                  maxLength: 20,
-                  initialValue: (() {
-                    if (widget.modifyMode == true) {
-                      return oldCategoryName;
-                    } else {
-                      return '';
-                    }
-                  }()),
-                  decoration: const InputDecoration(
-                    hintText: 'What\'s the category name?',
-                    labelText: 'Category name',
-                    labelStyle: TextStyle(fontSize: 16),
-                    hintStyle: TextStyle(fontSize: 16, color: Colors.black45),
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter an emoji!';
+                      } else if (!REGEX_EMOJI.hasMatch(value)) {
+                        return 'Only emoji are allowed!';
+                      } else if (!checkIfCategoryNameAvailable("", value, oldCategoryEmoji, widget.modifyMode)) {
+                        return 'Emoji already used!';
+                      } else {
+                        categoryEmoji = value;
+                        return null;
+                      }
+                    },
                   ),
-                  onSaved: (String? value) {
-                    setState(() {});
-                  },
-                  validator: (String? value) {
-                    final validCharacters = RegExp(r'^[a-zA-Z0-9]+$');
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text!';
-                    } else if (!validCharacters.hasMatch(value)) {
-                      return 'Invalid characters!';
-                    } else if (!checkIfCategoryNameAvailable(value, "", oldCategoryName, widget.modifyMode)) {
-                      return 'Name already used!';
-                    } else {
-                      categoryName = value;
-                      return null;
-                    }
-                  },
-                ),
-              ],
+                  TextFormField(
+                    cursorColor: Colors.amber,
+                    style: TextStyle(fontSize: 18),
+                    maxLength: 20,
+                    initialValue: (() {
+                      if (widget.modifyMode == true) {
+                        return oldCategoryName;
+                      } else {
+                        return '';
+                      }
+                    }()),
+                    decoration: const InputDecoration(
+                      hintText: 'What\'s the category name?',
+                      labelText: 'Category name',
+                      labelStyle: TextStyle(fontSize: 16, color: Colors.black45),
+                      hintStyle: TextStyle(fontSize: 16, color: Colors.black45),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black45)),
+                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
+                    ),
+                    onSaved: (String? value) {
+                      setState(() {});
+                    },
+                    validator: (String? value) {
+                      final validCharacters = RegExp(r'^[a-zA-Z0-9]+$');
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter some text!';
+                      } else if (!validCharacters.hasMatch(value)) {
+                        return 'Invalid characters!';
+                      } else if (!checkIfCategoryNameAvailable(value, "", oldCategoryName, widget.modifyMode)) {
+                        return 'Name already used!';
+                      } else {
+                        categoryName = value;
+                        return null;
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -149,11 +160,11 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                         if (widget.modifyMode == false) {
                           Navigator.of(context).pop();
                           createNewCategory(categoryName, categoryEmoji);
-                          showPopUpMessage(context,"✅","Category created!",null);
+                          showPopUpMessage(context, "✅", "Category created!", null);
                         } else {
                           Navigator.of(context).pop();
                           modifyCategory(widget.modifyIndex, categoryName, categoryEmoji);
-                          showPopUpMessage(context,"✅","Category modified!",null);
+                          showPopUpMessage(context, "✅", "Category modified!", null);
                         }
                       } else {
                         debugPrint("Error! Validation failed in category creation form!");

@@ -18,6 +18,10 @@ boolean_selector
 2.12
 file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/boolean_selector-2.1.0/
 file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/boolean_selector-2.1.0/lib/
+calendar_date_picker2
+2.16
+file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/calendar_date_picker2-0.3.5/
+file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/calendar_date_picker2-0.3.5/lib/
 characters
 2.12
 file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/characters-1.2.1/
@@ -110,10 +114,6 @@ image_picker_platform_interface
 2.12
 file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/image_picker_platform_interface-2.6.2/
 file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/image_picker_platform_interface-2.6.2/lib/
-intl
-2.12
-file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/intl-0.18.0/
-file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/intl-0.18.0/lib/
 js
 2.16
 file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/js-0.6.4/
@@ -202,14 +202,6 @@ string_scanner
 2.12
 file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/string_scanner-1.1.1/
 file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/string_scanner-1.1.1/lib/
-syncfusion_flutter_core
-2.12
-file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/syncfusion_flutter_core-20.3.61/
-file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/syncfusion_flutter_core-20.3.61/lib/
-syncfusion_flutter_datepicker
-2.12
-file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/syncfusion_flutter_datepicker-20.3.61/
-file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/syncfusion_flutter_datepicker-20.3.61/lib/
 term_glyph
 2.12
 file:///C:/flutter_2.5.2/.pub-cache/hosted/pub.dartlang.org/term_glyph-1.2.1/

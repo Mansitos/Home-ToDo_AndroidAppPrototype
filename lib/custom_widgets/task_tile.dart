@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/pop_up_message.dart';
@@ -32,7 +30,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
     selected = widget.task.getCompleted();
 
     return Padding(
-      padding: globals.compactTaskListViewEnabled == false ? const EdgeInsets.only(left: 6, right: 6, top: 3, bottom: 3) : const EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
+      padding: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? const EdgeInsets.only(left: 6, right: 6, top: 3, bottom: 3) : const EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
       child: GestureDetector(
         onTapDown: (TapDownDetails details) {
           setState(() {
@@ -43,7 +41,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
           style: TextButton.styleFrom(
             primary: Colors.black,
             backgroundColor: selected == false ? Colors.white : Colors.white,
-            padding: globals.compactTaskListViewEnabled == false ? EdgeInsets.all(6) : EdgeInsets.all(1),
+            padding: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? EdgeInsets.all(6) : EdgeInsets.all(1),
           ),
           onLongPress: () {
             showMenu(
@@ -126,7 +124,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                             // We have to wait till the animations finish, and then open the dialog.
                             WidgetsBinding.instance?.addPostFrameCallback((_) {
                               Navigator.push(context, MaterialPageRoute(builder: (context) => TaskScreen(mode: "Modify", taskToModify: widget.task))).then((value) => setState(() {
-                                    widget.onChange(); // TODO: does not update :(
+                                    widget.onChange();
                                   }));
                             });
                           },
@@ -193,7 +191,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                         height: 5,
                       ),
                       Text(
-                        _hourToString(widget.task.timeLimit) + " - " + widget.task.dateLimit.day.toString() + "/" + widget.task.dateLimit.month.toString() + "/" + widget.task.dateLimit.year.toString(),
+                        _hourToString(widget.task.timeLimit) + " - " + _dateToString(widget.task.dateLimit),
                         style: selected == true ? TextStyle(fontSize: 12, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 12),
                       ),
                       Container(
@@ -205,27 +203,30 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                 ),
               ),
               Padding(
-                padding: globals.compactTaskListViewEnabled == false ? const EdgeInsets.only(top: 2, bottom: 2, left: 12, right: 10) : const EdgeInsets.only(top: 2, bottom: 2, left: 5, right: 8),
+                padding: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? const EdgeInsets.only(top: 2, bottom: 2, left: 12, right: 10) : const EdgeInsets.only(top: 2, bottom: 2, left: 5, right: 8),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                        padding: EdgeInsets.all(2),
-                        decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle),
-                        child: ClipOval(
-                          child: SizedBox.fromSize(
-                            size: Size.fromRadius(18),
-                            child: widget.task.user.image == null
-                                ? Image.asset(
-                                    "lib/assets/user_images/default_users_img.png",
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.file(
-                                    widget.task.user.image!,
-                                    fit: BoxFit.cover,
-                                  ),
-                          ),
-                        )),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 5, left: 5),
+                      child: Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+                          child: ClipOval(
+                            child: SizedBox.fromSize(
+                              size: Size.fromRadius(18),
+                              child: widget.task.user.image == null
+                                  ? Image.asset(
+                                      "lib/assets/user_images/default_users_img.png",
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.file(
+                                      widget.task.user.image!,
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
+                          )),
+                    ),
                     Container(
                       height: 2,
                     ),
@@ -277,10 +278,10 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
     bool useDefaultMessage = Random().nextBool();
     List<List<String>> deletionMessages = [
       ["🔥", "Task burnt!"],
-      ["☢", "Task sent into nuclear reactor!"],
-      ["😺", "Task eaten by developers cat!"],
+      ["☢", "Task sent into a nuclear reactor!"],
+      ["😺", "Task eaten by developer's cat!"],
       ["🐶", "Task eaten by a dog!"],
-      ["🚀", "Task sent into space!"]
+      ["🚀", "Task sent into space!"],
     ];
 
     if (useDefaultMessage) {
@@ -296,5 +297,23 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
       text += "⭐";
     }
     return text;
+  }
+
+  String _dateToString(DateTime date) {
+    DateTime today = DateTime.now();
+    DateTime yesterday = today.subtract(Duration(days: 1));
+    DateTime tomorrow = today.add(Duration(days: 1));
+    if (date.year == today.year && date.month == today.month && date.day == today.day) {
+      // Today case
+      return "Today";
+    } else if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
+      // Yesterday case
+      return "Yesterday";
+    } else if (date.year == tomorrow.year && date.month == tomorrow.month && date.day == tomorrow.day) {
+      // Tomorrow case
+      return "Tomorrow";
+    } else {
+      return date.day.toString() + "/" + date.month.toString() + "/" + date.year.toString();
+    }
   }
 }

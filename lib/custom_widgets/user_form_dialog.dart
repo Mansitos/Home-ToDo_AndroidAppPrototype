@@ -5,6 +5,7 @@ import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/users_utilities.dart';
 import 'package:image_crop/image_crop.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:home_to_do/utilities/globals.dart' as globals;
 
 class UserDialogForm extends StatefulWidget {
   const UserDialogForm({Key? key, required this.modifyMode, required this.userToModify, required this.onChange}) : super(key: key);
@@ -129,38 +130,47 @@ class UserDialogFormState extends State<UserDialogForm> {
                 ),
                 Container(height: 4,),
                 Text("Tap to change picture!", style: TextStyle(color: Colors.black54, fontSize: 10),),
-                TextFormField(
-                  style: TextStyle(fontSize: 18),
-                  maxLength: 15,
-                  initialValue: (() {
-                    if (widget.modifyMode == true) {
-                      return oldUserName;
-                    } else {
-                      return '';
-                    }
-                  }()),
-                  decoration: const InputDecoration(
-                    hintText: 'What\'s your name?',
-                    labelText: 'Name',
-                    labelStyle: TextStyle(fontSize: 16),
-                    hintStyle: TextStyle(fontSize: 16, color: Colors.black45),
+                Theme(
+                  data: Theme.of(context).copyWith(
+                      textSelectionTheme: TextSelectionThemeData(
+                          selectionColor: Colors.amber)),
+                  child: TextFormField(
+                    cursorColor: Colors.amber,
+                    style: TextStyle(fontSize: 18),
+                    maxLength: globals.userMaxLen,
+                    initialValue: (() {
+                      if (widget.modifyMode == true) {
+                        return oldUserName;
+                      } else {
+                        return '';
+                      }
+                    }()),
+                    decoration: const InputDecoration(
+                      hintText: 'What\'s your name?',
+                      labelText: 'Name',
+                      labelStyle: TextStyle(fontSize: 16, color: Colors.black45),
+                      hintStyle: TextStyle(fontSize: 16, color: Colors.black45),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black45)),
+                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
+
+                    ),
+                    onSaved: (String? value) {
+                      setState(() {});
+                    },
+                    validator: (String? value) {
+                      final validCharacters = globals.userValidChars;
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter some text!';
+                      } else if (!validCharacters.hasMatch(value)) {
+                        return 'Invalid characters!';
+                      } else if (!checkIfUserNameAvailable(value, "", oldUserName, widget.modifyMode)) {
+                        return 'Name already used!';
+                      } else {
+                        userName = value;
+                        return null;
+                      }
+                    },
                   ),
-                  onSaved: (String? value) {
-                    setState(() {});
-                  },
-                  validator: (String? value) {
-                    final validCharacters = RegExp(r'^[a-zA-Z0-9]+$');
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text!';
-                    } else if (!validCharacters.hasMatch(value)) {
-                      return 'Invalid characters!';
-                    } else if (!checkIfUserNameAvailable(value, "", oldUserName, widget.modifyMode)) {
-                      return 'Name already used!';
-                    } else {
-                      userName = value;
-                      return null;
-                    }
-                  },
                 ),
               ],
             ),

@@ -29,6 +29,7 @@ class TaskScreenState extends State<TaskScreen> {
   bool startingSelectedReminder = false;
   int startingSelectedScore = 3;
   User startingSelectedUser = globals.users[0];
+  String startingSelectedRepeat = "No";
 
   String? selectedName;
   String? selectedDescription;
@@ -38,6 +39,7 @@ class TaskScreenState extends State<TaskScreen> {
   bool? selectedReminder;
   int? selectedScore; // the value is the default one
   User? selectedUser;
+  String? selectedRepeat;
 
   MediaQueryData? queryData;
   double screenWidth = 0;
@@ -61,9 +63,13 @@ class TaskScreenState extends State<TaskScreen> {
                 onSurface: Colors.black,
                 surface: Colors.white,
               ),
+              textSelectionTheme: TextSelectionThemeData(
+                selectionColor: Colors.amber,
+                cursorColor: Colors.black,
+              ),
               textButtonTheme: TextButtonThemeData(
                 style: TextButton.styleFrom(
-                  primary: Colors.black, // button text color
+                  foregroundColor: Colors.black, // button text color
                 ),
               ),
             ),
@@ -91,9 +97,13 @@ class TaskScreenState extends State<TaskScreen> {
               colorScheme: const ColorScheme.light(
                 primary: Colors.black,
               ),
+              textSelectionTheme: TextSelectionThemeData(
+                selectionColor: Colors.amber,
+                cursorColor: Colors.black,
+              ),
               textButtonTheme: TextButtonThemeData(
                 style: TextButton.styleFrom(
-                  primary: Colors.black,
+                  foregroundColor: Colors.black,
                 ),
               ),
             ),
@@ -142,7 +152,7 @@ class TaskScreenState extends State<TaskScreen> {
                   child: Row(
                     children: [
                       CategoryDropDownSelector(
-                        selectedCategory: _getSelectedCategory()!,
+                        selectedCategory: _getSelectedCategory()!.toString(),
                         onChange: (Category val) {
                           setState(() {
                             selectedCategory = val;
@@ -157,8 +167,7 @@ class TaskScreenState extends State<TaskScreen> {
                   child: TextFormField(
                       initialValue: selectedName,
                       onSaved: (String? value) {
-                        setState(() {
-                        });
+                        setState(() {});
                       },
                       onChanged: (String? value) {
                         selectedName = value;
@@ -219,7 +228,7 @@ class TaskScreenState extends State<TaskScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          height: screenHeight*0.0425,
+                          height: screenHeight * 0.0425,
                           child: ElevatedButton(
                               onPressed: () {
                                 _selectDate(context);
@@ -243,7 +252,7 @@ class TaskScreenState extends State<TaskScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        height: screenHeight*0.0425,
+                        height: screenHeight * 0.0425,
                         child: ElevatedButton(
                             onPressed: () {
                               _selectHour(context);
@@ -259,15 +268,12 @@ class TaskScreenState extends State<TaskScreen> {
                     Icons.repeat,
                     color: Colors.white,
                   ),
-                  title: const Text(
-                    'Repeat',
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                          height: screenHeight*0.0425,child: ElevatedButton(onPressed: () {}, child: Text("No"))),
-                    ],
+                  title: DropDownRepeat(
+                    onChange: (String val) {
+                      selectedRepeat = val;
+                      setState(() {});
+                    },
+                    selectedRepeat: _getSelectedRepeat()!,
                   ),
                 ),
                 const Divider(),
@@ -283,7 +289,7 @@ class TaskScreenState extends State<TaskScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        height: screenHeight*0.0425,
+                        height: screenHeight * 0.0425,
                         child: ElevatedButton(
                             onPressed: () {
                               setState(() {
@@ -360,11 +366,11 @@ class TaskScreenState extends State<TaskScreen> {
                         if (_formKey.currentState!.validate()) {
                           if (widget.mode == "Add") {
                             setState(() {
-                              createNewTask(selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!);
+                              createNewTask(selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!, _getSelectedRepeat()!);
                             });
                           }
                           if (widget.mode == "Add") {
-                            showPopUpMessage(context, _getRandomConfirmationEmoji(),"Task created!", null, additionalPops: 1);
+                            showPopUpMessage(context, _getRandomConfirmationEmoji(), "Task created!", null, additionalPops: 1);
                           } else if (widget.mode == "Modify") {
                             showDialog(
                                 context: context,
@@ -393,9 +399,9 @@ class TaskScreenState extends State<TaskScreen> {
                                               heroTag: "ConfirmModify",
                                               onPressed: () {
                                                 debugPrint("Task modify confirmed!");
-                                                modifyTask(widget.taskToModify!, selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!);
+                                                modifyTask(widget.taskToModify!, selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!, _getSelectedRepeat()!);
                                                 Navigator.of(context).pop();
-                                                showPopUpMessage(context, "✅","Task modified!", null, additionalPops: 1);
+                                                showPopUpMessage(context, "✅", "Task modified!", null, additionalPops: 1);
                                               },
                                               tooltip: "Confirm",
                                               child: const Icon(Icons.check),
@@ -480,6 +486,14 @@ class TaskScreenState extends State<TaskScreen> {
     }
   }
 
+  String? _getSelectedRepeat() {
+    if (selectedRepeat == null) {
+      return startingSelectedRepeat;
+    } else {
+      return selectedRepeat;
+    }
+  }
+
   String _dateToString(DateTime date) {
     return date.day.toString() + "/" + date.month.toString() + "/" + date.year.toString();
   }
@@ -501,6 +515,7 @@ class TaskScreenState extends State<TaskScreen> {
     startingSelectedReminder = false; // TODO: reminder not implemented
     startingSelectedScore = task.score;
     startingSelectedUser = task.user;
+    startingSelectedRepeat = task.repeat;
   }
 
   int? _getSelectedScore() {
@@ -512,7 +527,7 @@ class TaskScreenState extends State<TaskScreen> {
   }
 
   String _getRandomConfirmationEmoji() {
-    List<String> confirmationEmojis = ["🚀", "👌", "👍", "🎉", "⚡", "✅", "✅", "✅", "✅", "✅"];
+    List<String> confirmationEmojis = ["🚀", "👌", "👍", "🎉","😄","💪","🎉" "⚡", "✅", "✅","✅", "✅", "✅", "✅", "✅"];
     return confirmationEmojis[Random().nextInt(confirmationEmojis.length)];
   }
 }
@@ -520,7 +535,7 @@ class TaskScreenState extends State<TaskScreen> {
 class CategoryDropDownSelector extends StatefulWidget {
   CategoryDropDownSelector({Key? key, required this.selectedCategory, required this.onChange}) : super(key: key);
 
-  Category selectedCategory;
+  String selectedCategory;
   final categoryCallback onChange;
 
   @override
@@ -528,7 +543,7 @@ class CategoryDropDownSelector extends StatefulWidget {
 }
 
 typedef void categoryCallback(Category val);
-
+typedef void StringCallback(String val);
 typedef void userCallback(User val);
 
 class CategoryDropDownSelectorState extends State<CategoryDropDownSelector> {
@@ -541,24 +556,24 @@ class CategoryDropDownSelectorState extends State<CategoryDropDownSelector> {
     screenHeight = queryData!.size.height;
 
     return SizedBox(
-      height: screenHeight*0.0475,
+      height: screenHeight * 0.0475,
       child: Card(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(1000.0),
         ),
         child: DropdownButtonHideUnderline(
             child: Padding(
-          padding: const EdgeInsets.only(left: 12,right:2),
+          padding: const EdgeInsets.only(left: 12, right: 2),
           child: DropdownButton<String>(
-              style: const TextStyle(color: Colors.black,fontSize: 16),
-              value: serializeCategory(widget.selectedCategory),
+              style: const TextStyle(color: Colors.black, fontSize: 16),
+              value: widget.selectedCategory,
               icon: Padding(
                 padding: const EdgeInsets.all(3.0),
                 child: const Icon(Icons.arrow_drop_down),
               ),
               onChanged: (String? newValue) {
                 setState(() {
-                  widget.selectedCategory = decodeSerializedCategory(newValue!);
+                  widget.selectedCategory = decodeSerializedCategory(newValue!).toString();
                   widget.onChange(decodeSerializedCategory(newValue));
                 });
               },
@@ -601,6 +616,16 @@ List<DropdownMenuItem<String>> selectedUserDropdownItems(Color color) {
   return items;
 }
 
+class DropDownRepeat extends StatefulWidget {
+  DropDownRepeat({Key? key, required this.onChange, required this.selectedRepeat}) : super(key: key);
+
+  final StringCallback onChange;
+  String selectedRepeat;
+
+  @override
+  State<DropDownRepeat> createState() => _DropDownRepeatState();
+}
+
 class DropDownUsers extends StatefulWidget {
   DropDownUsers({Key? key, required this.selectedUser, required this.onChange}) : super(key: key);
 
@@ -612,13 +637,73 @@ class DropDownUsers extends StatefulWidget {
   State<DropDownUsers> createState() => _DropDownUsersState();
 }
 
+class _DropDownRepeatState extends State<DropDownRepeat> {
+  MediaQueryData? queryData;
+  double screenHeight = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    queryData = MediaQuery.of(context);
+    screenHeight = queryData!.size.height;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text("Repeat"),
+        Container(
+          height: screenHeight * 0.0425,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(5.0)),
+            color: Colors.white,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 4.0, right: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                DropdownButton<String>(
+                    //dropdownColor: const Color.fromRGBO(42, 42, 42, 1),
+                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                    value: widget.selectedRepeat,
+                    icon: null,
+                    underline: Container(
+                      height: 0,
+                    ),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        widget.selectedRepeat = newValue!;
+                        widget.onChange(newValue);
+                      });
+                    },
+                    onTap: () {},
+                    items: repeatSelectionDropdownItems),
+              ],
+            ),
+          ),
+        )
+      ],
+    );
+  }
+}
+
+List<DropdownMenuItem<String>> get repeatSelectionDropdownItems {
+  TextStyle textStyle = TextStyle(fontSize: 16, color: Colors.black);
+
+  List<DropdownMenuItem<String>> items = [
+    DropdownMenuItem(child: Text("No", style: textStyle), value: "No"),
+    DropdownMenuItem(child: Text("Every Day", style: textStyle), value: "Every Day"),
+    DropdownMenuItem(child: Text("Every Week", style: textStyle), value: "Every Week"),
+    DropdownMenuItem(child: Text("Custom Interval", style: textStyle), value: "Custom Interval"),
+  ];
+  return items;
+}
+
 class _DropDownUsersState extends State<DropDownUsers> {
   MediaQueryData? queryData;
   double screenHeight = 0;
 
   @override
   Widget build(BuildContext context) {
-
     queryData = MediaQuery.of(context);
     screenHeight = queryData!.size.height;
 
@@ -627,7 +712,7 @@ class _DropDownUsersState extends State<DropDownUsers> {
       children: [
         Text("User"),
         Container(
-          height: screenHeight*0.0425,
+          height: screenHeight * 0.0425,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(5.0)),
             color: Colors.white,

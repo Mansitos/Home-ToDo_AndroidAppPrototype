@@ -59,7 +59,18 @@ class TasksStorage {
       if(contents != "") {
         for (var i = 0; i < encodedTasks.length; i++) {
           String encodedTask = encodedTasks[i];
-          tasks.add(await decodeSerializedTask(encodedTask));
+          Task decodedTask = await decodeSerializedTask(encodedTask);
+          if(globals.autoMonthOldDelete == true){
+            // Check if task is so old that it must be deleted!
+            DateTime oneMonthAgo = DateTime.now().subtract(Duration(days: 30));
+            if(decodedTask.dateLimit.isAfter(oneMonthAgo)){
+              tasks.add(decodedTask);
+            }else{
+              debugPrint(" > Task with ID: " + decodedTask.getID().toString() + " will be discarded because 1 month old!");
+            }
+          }else {
+            tasks.add(decodedTask);
+          }
         }
       }
 

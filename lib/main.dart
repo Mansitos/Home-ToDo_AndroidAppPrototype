@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:home_to_do/data_types/global_settings.dart';
-import 'package:home_to_do/pages/search_page.dart';
 import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/pages/users_page.dart';
 import 'package:home_to_do/pages/categories_page.dart';
+import 'package:home_to_do/utilities/generic_utilities.dart';
+import 'package:home_to_do/utilities/task_utilities.dart';
 import 'package:path_provider/path_provider.dart';
 import 'custom_widgets/category_horizontal_list_view.dart';
 import 'custom_widgets/pop_up_message.dart';
@@ -24,12 +25,19 @@ Future<void> main() async {
 
 // Load internal variables from files: tasks, categories, etc.
 Future<bool> initializeApplicationVariables() async {
+  // Load global application variables
+  await globals.globalSettingsStorage.loadGlobalSettingsFromFile();
+
   // Load categories and tasks from file
   await globals.categoriesStorage.loadCategoriesFromFile();
   await globals.tasksStorage.loadTasksFromFile();
   await globals.usersStorage.loadUsersFromFile();
-  // Load global application variables
-  await globals.globalSettingsStorage.loadGlobalSettingsFromFile();
+
+  // TODO: FOR DEBUG, remove
+  //await createNewTask("2old", "decription", globals.categories[0], DateTime.now().subtract(Duration(days: 2)), TimeOfDay(hour: 20, minute: 20), 4, globals.users[0], "No");
+  //await createNewTask("40old", "decription", globals.categories[0], DateTime.now().subtract(Duration(days: 40)), TimeOfDay(hour: 20, minute: 20), 4, globals.users[0], "No");
+  //await createNewTask("22old", "decription", globals.categories[0], DateTime.now().subtract(Duration(days: 22)), TimeOfDay(hour: 20, minute: 20), 3, globals.users[0], "No");
+  //await createNewTask("30old", "decription", globals.categories[0], DateTime.now().subtract(Duration(days: 30)), TimeOfDay(hour: 20, minute: 20), 2, globals.users[0], "No");
 
   return true;
 }
@@ -47,12 +55,17 @@ class MyApp extends StatelessWidget {
             return MaterialApp(
               title: "Home-ToDo",
               theme: ThemeData(
-                  scaffoldBackgroundColor: const Color.fromRGBO(42, 42, 42, 100),
-                  colorScheme: const ColorScheme.light(
-                    primary: Colors.white,
-                    onPrimary: Colors.black,
-                    secondary: Colors.amber,
-                  )),
+                scaffoldBackgroundColor: const Color.fromRGBO(42, 42, 42, 100),
+                colorScheme: const ColorScheme.light(
+                  primary: Colors.white,
+                  onPrimary: Colors.black,
+                  secondary: Colors.amber,
+                  onSurface: Colors.white,
+                ),
+                textSelectionTheme: TextSelectionThemeData(
+                  selectionHandleColor: Colors.amber,
+                ),
+              ),
               home: const MainScreen(),
             );
           } else {
@@ -94,10 +107,13 @@ class MainScreenState extends State<MainScreen> {
     });
   }
 
-  void rebuildMainScreen(bool restoreSelectedUser) {
+  void rebuildMainScreen(bool restoreSelectedUser, bool restoreSelectedCategory) {
     setState(() {
       if (restoreSelectedUser == true) {
         selectedUser = globals.users[0];
+      }
+      if (restoreSelectedCategory == true) {
+        selectedCategory = globals.categories[0];
       }
     });
   }
@@ -108,7 +124,7 @@ class MainScreenState extends State<MainScreen> {
     } else {
       task.undoComplete();
     }
-    rebuildMainScreen(false);
+    rebuildMainScreen(false, false);
   }
 
   // By default, the default one (which is always in first pos)
@@ -121,439 +137,630 @@ class MainScreenState extends State<MainScreen> {
   // By default, the default one (which is always in first pos)
   User? selectedUser = globals.users[0];
 
+  // By default, list view
+  String viewMode = "list";
+
+  // Selected Time option
+  String selectedTimeOption = "Today";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawerEnableOpenDragGesture: false,
-      appBar: AppBar(
-        elevation: 1,
-        automaticallyImplyLeading: false,
-        title: MainScreenTimeIntervalSelectionDropdown(
-          onChange: (List<DateTime?> val) {
-            selectedStartingDate = val[0];
-            selectedEndDate = val[1];
-            debugPrint("> Changed time filter:" + selectedStartingDate.toString() + " to " + selectedEndDate.toString());
-            rebuildMainScreen(false);
-          },
-        ),
-        actions: <Widget>[
-          MainScreenAdditionalOptionsDropdown(rebuildMainScreenCallback: rebuildMainScreen),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: "AddTask",
-        onPressed: () {
-          debugPrint("Add task button pressed");
-          Navigator.push(context, MaterialPageRoute(builder: (context) => TaskScreen(mode: "Add"))).then((_) => setState(() {}));
-        },
-        tooltip: "Schedule a new task",
-        child: const Icon(Icons.add),
-      ),
-      bottomNavigationBar: MainMenuBottomNavBar(
-        userDropUpWidgetKey: userSelectionDropUpKey,
-        showUserDropUpFunction: showUserDropUp,
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              child: Column(
-                children: [
-                  Text(
-                    'Home To-Do',
-                    style: TextStyle(fontSize: 35),
-                  ),
-                  Container(height: 3,),
-                  Expanded(
-                    child: Container(child: Image.asset("lib/assets/logo.png")),
-                  ),
-                Container(height: 3,)],
-              ),
-            ),
-            ListTile(
-              title: Row(
-                children: [
-                  Icon(Icons.info_rounded, color: Colors.black,),
-                  const Text(' About the app'),
-                ],
-              ),
-              onTap: () {
-                // Navigator.pop close the pop-up while showing the dialog.
-                // We have to wait till the animations finish, and then open the dialog.
-                WidgetsBinding.instance?.addPostFrameCallback((_) {
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Column(
-                            children: [
-                              const Text("About the App"),
-                            ],
-                          ),
-                          content: const Text('This app was developed by Andrea Mansi for the university exam "Sviluppo di Applicazioni Mobili/Mobile Apps Development".\n\n🏛️ University of Udine 🇮🇹 Italy\nMaster\'s degree in Computer Science\nCurricula: Big-Data Analytics.\n\nThis is my first mobile application project and my first code in Dart+Flutter.\n\nPlease expect to find lots of bugs! 😝', textAlign: TextAlign.center),
-                          actions: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: <Widget>[
-                                  FloatingActionButton(
-                                    heroTag: "Back",
-                                    onPressed: () {
-                                      setState(() {
-                                        Navigator.of(context).pop();
-                                      });
-                                    },
-                                    tooltip: "Back",
-                                    child: const Icon(Icons.check),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      });
-                });
-              },
-            ),
-            Divider(height: 10),
-            ListTile(
-              title: Row(
-                children: [
-                  Icon(Icons.local_fire_department,color: Colors.red,),
-                  const Text(' Wipe all data'),
-                ],
-              ),
-              onTap: () {
-                // Navigator.pop close the pop-up while showing the dialog.
-                // We have to wait till the animations finish, and then open the dialog.
-                WidgetsBinding.instance?.addPostFrameCallback((_) {
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Column(
-                            children: [
-                              Text(
-                                "☠",
-                                style: TextStyle(fontSize: 60),
-                              ),
-                              Text(
-                                "Are you sure you want to wipe all data?",
-                                style: TextStyle(
-                                  color: Colors.red,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              Text(
-                                "You can't undo this operation!",
-                                style: TextStyle(color: Colors.red),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                          actions: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
-                                  FloatingActionButton(
-                                    heroTag: "UndoDataWipe",
-                                    onPressed: () {
-                                      setState(() {
-                                        debugPrint("Wipe data cancelled!");
-                                        Navigator.of(context).pop();
-                                      });
-                                    },
-                                    tooltip: "Wipe All Data",
-                                    child: const Icon(Icons.cancel),
-                                  ),
-                                  FloatingActionButton(
-                                    heroTag: "ConfirmDataWipe",
-                                    backgroundColor: Colors.redAccent,
-                                    onPressed: () async {
-                                      debugPrint("Data Wipe confirmed!");
-                                      await _wipeAllData();
-                                      Navigator.of(context).pop();
-                                      showPopUpMessage(context, "🚀", "Data successfully sent into a black hole!\nIt's gone forever...", 2300);
-                                      rebuildMainScreen(false);
-                                    },
-                                    tooltip: "Confirm",
-                                    child: const Icon(Icons.delete),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      });
-                });
-              },
-            ),
-            Divider(height: 10),
-            ListTile(
-              title: Row(
-                children: [
-                  Icon(Icons.star,color: Colors.amber,),
-                  const Text(' Rate on the app store'),
-                ],
-              ),
-              onTap: () {
-                // Navigator.pop close the pop-up while showing the dialog.
-                // We have to wait till the animations finish, and then open the dialog.
-                WidgetsBinding.instance?.addPostFrameCallback((_) {
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Column(
-                            children: [
-                              const Text("Placeholder..."),
-                            ],
-                          ),
-                          content: const Text('This button should bring you to play store so you can rate the app', textAlign: TextAlign.center),
-                          actions: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: <Widget>[
-                                  FloatingActionButton(
-                                    heroTag: "Back",
-                                    onPressed: () {
-                                      setState(() {
-                                        Navigator.of(context).pop();
-                                      });
-                                    },
-                                    tooltip: "Back",
-                                    child: const Icon(Icons.check),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      });
-                });
-              },
-            ),
-            Divider(height: 10),
-            ListTile(
-              title: Row(
-                children: [
-                  Icon(Icons.app_settings_alt, color: Colors.black,),
-                  const Text(' Application settings'),
-                ],
-              ), // TODO: go to android settings page
-              onTap: () {
-                // Navigator.pop close the pop-up while showing the dialog.
-                // We have to wait till the animations finish, and then open the dialog.
-                WidgetsBinding.instance?.addPostFrameCallback((_) {
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Column(
-                            children: [
-                              const Text("Placeholder..."),
-                            ],
-                          ),
-                          content: const Text('This button should bring you to the android app-settings for this app...', textAlign: TextAlign.center),
-                          actions: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: <Widget>[
-                                  FloatingActionButton(
-                                    heroTag: "Back",
-                                    onPressed: () {
-                                      setState(() {
-                                        Navigator.of(context).pop();
-                                      });
-                                    },
-                                    tooltip: "Back",
-                                    child: const Icon(Icons.check),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      });
-                });
-              },
-            ),
-            Divider(height: 10),
-            ListTile(
-              title: Row(
-                children: [
-                  globals.popUpMessagesEnabled ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.cancel, color: Colors.red,),
-                  Text(globals.popUpMessagesEnabled ? ' Pop-Up messages' : ' Pop-Up messages'),
-                ],
-              ),
-              onTap: () {
-                // Navigator.pop close the pop-up while showing the dialog.
-                // We have to wait till the animations finish, and then open the dialog.
-                WidgetsBinding.instance?.addPostFrameCallback((_) {
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Column(
-                            children: [
-                              const Text("Pop-Up Messages"),
-                            ],
-                          ),
-                          content: const Text('This option enables/disables pop-up messages, like for example:\n\"✅ New task created\".', textAlign: TextAlign.center),
-                          actions: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        globals.popUpMessagesEnabled = false;
-                                        debugPrint("Pop-Up messages disabled");
-                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled));
-                                        Navigator.of(context).pop();
-                                      });
-                                    },
-                                    child: Text(
-                                      globals.popUpMessagesEnabled ? "Disable" : "Keep disabled",
-                                      style: TextStyle(fontSize: 19, color: Colors.black),
-                                    ),
-                                    style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        globals.popUpMessagesEnabled = true;
-                                        debugPrint("Pop-Up messages enabled");
-                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled));
-                                        Navigator.of(context).pop();
-                                      });
-                                    },
-                                    child: Text(
-                                      globals.popUpMessagesEnabled ? "Keep enabled" : "Enable",
-                                      style: TextStyle(fontSize: 19, color: Colors.black),
-                                    ),
-                                    style: TextButton.styleFrom(backgroundColor: Colors.amber),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      });
-                });
-              },
-            ),
-            Divider(height: 10),
-            ListTile(
-              title: Row(
-                children: [
-                  globals.compactTaskListViewEnabled ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.cancel, color: Colors.red,),
-                  Text(globals.compactTaskListViewEnabled ? ' Compact tasks-list view' : ' Compact tasks-list view'),
-                ],
-              ),
-              onTap: () {
-                // Navigator.pop close the pop-up while showing the dialog.
-                // We have to wait till the animations finish, and then open the dialog.
-                WidgetsBinding.instance?.addPostFrameCallback((_) {
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Column(
-                            children: [
-                              const Text("Compact Tasks List View"),
-                            ],
-                          ),
-                          content: const Text('This option enables/disables compact view of the list of tasks.', textAlign: TextAlign.center),
-                          actions: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        globals.compactTaskListViewEnabled = false;
-                                        debugPrint("Compact Tasks List View Disabled");
-                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled));
-                                        Navigator.of(context).pop();
-                                      });
-                                    },
-                                    child: Text(
-                                      globals.compactTaskListViewEnabled ? "Disable" : "Keep disabled",
-                                      style: TextStyle(fontSize: 19, color: Colors.black),
-                                    ),
-                                    style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        globals.compactTaskListViewEnabled = true;
-                                        debugPrint("Compact Tasks List View enabled");
-                                        globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled));
-                                        Navigator.of(context).pop();
-                                      });
-                                    },
-                                    child: Text(
-                                      globals.compactTaskListViewEnabled ? "Keep enabled" : "Enable",
-                                      style: TextStyle(fontSize: 19, color: Colors.black),
-                                    ),
-                                    style: TextButton.styleFrom(backgroundColor: Colors.amber),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      });
-                });
-              },
-            ),
-            Divider(height: 10),
+        drawerEnableOpenDragGesture: false,
+        appBar: AppBar(
+          elevation: 1,
+          automaticallyImplyLeading: false,
+          title: viewMode == "list"
+              ? MainScreenTimeIntervalSelectionDropdown(
+                  startingSelectedValue: selectedTimeOption,
+
+                  viewMode: viewMode,
+                  onChange: (List<DateTime?> val) {
+                    if (val.isNotEmpty) {
+                      selectedStartingDate = val[0];
+                      selectedEndDate = val[1];
+                    }
+                    debugPrint("> Changed time filter:" + selectedStartingDate.toString() + " to " + selectedEndDate.toString());
+                    rebuildMainScreen(false, false);
+                  },
+                  onSelection: (String val) {
+                    setState(() {
+                      selectedTimeOption = val;
+                    });
+                  }, startingCustomInterval: [selectedStartingDate,selectedEndDate],
+                )
+              : _getCalendarViewActiveText([selectedStartingDate, selectedEndDate]),
+          actions: <Widget>[
+            MainScreenAdditionalOptionsDropdown(rebuildMainScreenCallback: rebuildMainScreen),
           ],
         ),
-      ),
-      body: Stack(children: <Widget>[
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            SizedBox(
-              height: 45,
-              child: CategoryHorizontalListView(
-                categories: globals.categories,
-                onChange: (Category val) {
-                  selectedCategory = val;
-                  rebuildMainScreen(false);
+        floatingActionButton: FloatingActionButton(
+          heroTag: "AddTask",
+          onPressed: () {
+            debugPrint("Add task button pressed");
+            Navigator.push(context, MaterialPageRoute(builder: (context) => TaskScreen(mode: "Add"))).then((_) => setState(() {}));
+          },
+          tooltip: "Schedule a new task",
+          child: const Icon(Icons.add),
+        ),
+        bottomNavigationBar: MainMenuBottomNavBar(
+          userDropUpWidgetKey: userSelectionDropUpKey,
+          showUserDropUpFunction: showUserDropUp,
+          changedViewModeCallback: (String val) {
+            viewMode = val;
+            rebuildMainScreen(false, false);
+
+            globals.activeViewMode = val;
+          },
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                child: Column(
+                  children: [
+                    Text(
+                      'Home To-Do',
+                      style: TextStyle(fontSize: 35),
+                    ),
+                    Container(
+                      height: 3,
+                    ),
+                    Expanded(
+                      child: Container(child: Image.asset("lib/assets/logo.png")),
+                    ),
+                    Container(
+                      height: 3,
+                    )
+                  ],
+                ),
+              ),
+              ListTile(
+                title: Row(
+                  children: [
+                    Icon(
+                      Icons.info_rounded,
+                      color: Colors.black,
+                    ),
+                    const Text(' About the app'),
+                  ],
+                ),
+                onTap: () {
+                  // Navigator.pop close the pop-up while showing the dialog.
+                  // We have to wait till the animations finish, and then open the dialog.
+                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Column(
+                              children: [
+                                const Text("About the App"),
+                              ],
+                            ),
+                            content: const Text('This app was developed by Andrea Mansi for the university exam "Sviluppo di Applicazioni Mobili/Mobile Apps Development".\n\n🏛️ University of Udine 🇮🇹 Italy\nMaster\'s degree in Computer Science\nCurricula: Big-Data Analytics.\n\nThis is my first mobile application project and my first code in Dart+Flutter.\n\nPlease expect to find lots of bugs! 😝', textAlign: TextAlign.center),
+                            actions: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: <Widget>[
+                                    FloatingActionButton(
+                                      heroTag: "Back",
+                                      onPressed: () {
+                                        setState(() {
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      tooltip: "Back",
+                                      child: const Icon(Icons.check),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        });
+                  });
                 },
               ),
-            ),
-            _additionalUserWidgetText(),
-            Expanded(
-              child: _tasksPageMainWidgetBuilder(context, rebuildMainScreen, completeTaskCallback, TaskFilter(startingDate: selectedStartingDate!, endDate: selectedEndDate, category: selectedCategory, user: selectedUser)),
+              Divider(height: 10),
+              ListTile(
+                title: Row(
+                  children: [
+                    Icon(
+                      Icons.local_fire_department,
+                      color: Colors.red,
+                    ),
+                    const Text(' Wipe all data'),
+                  ],
+                ),
+                onTap: () {
+                  // Navigator.pop close the pop-up while showing the dialog.
+                  // We have to wait till the animations finish, and then open the dialog.
+                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Column(
+                              children: [
+                                Icon(
+                                  Icons.warning,
+                                  color: Colors.red,
+                                  size: 80,
+                                ),
+                                Text(
+                                  "Are you sure you want to wipe all data?",
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                Text(
+                                  "You can't undo this operation!",
+                                  style: TextStyle(color: Colors.red),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                            actions: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    FloatingActionButton(
+                                      heroTag: "UndoDataWipe",
+                                      onPressed: () {
+                                        setState(() {
+                                          debugPrint("Wipe data cancelled!");
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      tooltip: "Wipe All Data",
+                                      child: const Icon(Icons.cancel),
+                                    ),
+                                    FloatingActionButton(
+                                      heroTag: "ConfirmDataWipe",
+                                      backgroundColor: Colors.redAccent,
+                                      onPressed: () async {
+                                        debugPrint("Data Wipe confirmed!");
+                                        await _wipeAllData();
+                                        Navigator.of(context).pop();
+                                        showPopUpMessage(context, "🚀", "Data successfully sent into a black hole!\nIt's gone forever...", 2300);
+                                        rebuildMainScreen(true, true);
+                                      },
+                                      tooltip: "Confirm",
+                                      child: const Icon(Icons.delete),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        });
+                  });
+                },
+              ),
+              Divider(height: 10),
+              ListTile(
+                title: Row(
+                  children: [
+                    Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                    ),
+                    const Text(' Rate on the app store'),
+                  ],
+                ),
+                onTap: () {
+                  // Navigator.pop close the pop-up while showing the dialog.
+                  // We have to wait till the animations finish, and then open the dialog.
+                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Column(
+                              children: [
+                                const Text("Placeholder..."),
+                              ],
+                            ),
+                            content: const Text('This button should bring you to play store so you can rate the app', textAlign: TextAlign.center),
+                            actions: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: <Widget>[
+                                    FloatingActionButton(
+                                      heroTag: "Back",
+                                      onPressed: () {
+                                        setState(() {
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      tooltip: "Back",
+                                      child: const Icon(Icons.check),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        });
+                  });
+                },
+              ),
+              Divider(height: 10),
+              ListTile(
+                title: Row(
+                  children: [
+                    Icon(
+                      Icons.app_settings_alt,
+                      color: Colors.black,
+                    ),
+                    const Text(' Application settings'),
+                  ],
+                ), // TODO: go to android settings page
+                onTap: () {
+                  // Navigator.pop close the pop-up while showing the dialog.
+                  // We have to wait till the animations finish, and then open the dialog.
+                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Column(
+                              children: [
+                                const Text("Placeholder..."),
+                              ],
+                            ),
+                            content: const Text('This button should bring you to the android app-settings for this app...', textAlign: TextAlign.center),
+                            actions: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: <Widget>[
+                                    FloatingActionButton(
+                                      heroTag: "Back",
+                                      onPressed: () {
+                                        setState(() {
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      tooltip: "Back",
+                                      child: const Icon(Icons.check),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        });
+                  });
+                },
+              ),
+              Divider(height: 10),
+              ListTile(
+                title: Row(
+                  children: [
+                    globals.popUpMessagesEnabled
+                        ? Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                          )
+                        : Icon(
+                            Icons.cancel,
+                            color: Colors.red,
+                          ),
+                    Text(globals.popUpMessagesEnabled ? ' Pop-Up messages: Yes' : ' Pop-Up messages: No'),
+                  ],
+                ),
+                onTap: () {
+                  // Navigator.pop close the pop-up while showing the dialog.
+                  // We have to wait till the animations finish, and then open the dialog.
+                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Column(
+                              children: [
+                                const Text("Pop-Up Messages"),
+                              ],
+                            ),
+                            content: const Text('This option enables/disables pop-up messages, like for example:\n\"✅ New task created\".', textAlign: TextAlign.center),
+                            actions: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          globals.popUpMessagesEnabled = false;
+                                          debugPrint("Pop-Up messages disabled");
+                                          globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled, alwaysShowExpiredTasks: globals.alwaysShowExpiredTasks, autoMonthOldDelete: globals.autoMonthOldDelete));
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      child: Text(
+                                        globals.popUpMessagesEnabled ? "Disable" : "Keep disabled",
+                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                      ),
+                                      style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          globals.popUpMessagesEnabled = true;
+                                          debugPrint("Pop-Up messages enabled");
+                                          globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled, alwaysShowExpiredTasks: globals.alwaysShowExpiredTasks, autoMonthOldDelete: globals.autoMonthOldDelete));
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      child: Text(
+                                        globals.popUpMessagesEnabled ? "Keep enabled" : "Enable",
+                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                      ),
+                                      style: TextButton.styleFrom(backgroundColor: Colors.amber),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        });
+                  });
+                },
+              ),
+              Divider(height: 10),
+              ListTile(
+                title: Row(
+                  children: [
+                    globals.compactTaskListViewEnabled
+                        ? Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                          )
+                        : Icon(
+                            Icons.cancel,
+                            color: Colors.red,
+                          ),
+                    Text(globals.compactTaskListViewEnabled ? ' Compact tasks-list view: Yes' : ' Compact tasks-list view: No'),
+                  ],
+                ),
+                onTap: () {
+                  // Navigator.pop close the pop-up while showing the dialog.
+                  // We have to wait till the animations finish, and then open the dialog.
+                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Column(
+                              children: [
+                                const Text("Compact Tasks List View"),
+                              ],
+                            ),
+                            content: const Text('This option enables/disables compact view of the list of tasks.', textAlign: TextAlign.center),
+                            actions: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          globals.compactTaskListViewEnabled = false;
+                                          debugPrint("Compact Tasks List View Disabled");
+                                          globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled, alwaysShowExpiredTasks: globals.alwaysShowExpiredTasks, autoMonthOldDelete: globals.autoMonthOldDelete));
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      child: Text(
+                                        globals.compactTaskListViewEnabled ? "Disable" : "Keep disabled",
+                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                      ),
+                                      style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          globals.compactTaskListViewEnabled = true;
+                                          debugPrint("Compact Tasks List View enabled");
+                                          globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled, alwaysShowExpiredTasks: globals.alwaysShowExpiredTasks, autoMonthOldDelete: globals.autoMonthOldDelete));
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      child: Text(
+                                        globals.compactTaskListViewEnabled ? "Keep enabled" : "Enable",
+                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                      ),
+                                      style: TextButton.styleFrom(backgroundColor: Colors.amber),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        });
+                  });
+                },
+              ),
+              Divider(height: 10),
+              ListTile(
+                title: Row(
+                  children: [
+                    globals.alwaysShowExpiredTasks
+                        ? Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                          )
+                        : Icon(
+                            Icons.cancel,
+                            color: Colors.red,
+                          ),
+                    Text(globals.alwaysShowExpiredTasks ? ' Show expired tasks: Yes' : ' Show expired tasks: No'),
+                  ],
+                ),
+                onTap: () {
+                  // Navigator.pop close the pop-up while showing the dialog.
+                  // We have to wait till the animations finish, and then open the dialog.
+                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Column(
+                              children: [
+                                const Text("Show Expired Tasks"),
+                              ],
+                            ),
+                            content: const Text('This option enables/disables expired tasks visualization under filtered tasks.', textAlign: TextAlign.center),
+                            actions: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          globals.alwaysShowExpiredTasks = false;
+                                          debugPrint("Show Expried Tasks disabled");
+                                          globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled, alwaysShowExpiredTasks: globals.alwaysShowExpiredTasks, autoMonthOldDelete: globals.autoMonthOldDelete));
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      child: Text(
+                                        globals.alwaysShowExpiredTasks ? "Disable" : "Keep disabled",
+                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                      ),
+                                      style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          globals.alwaysShowExpiredTasks = true;
+                                          debugPrint("Show Expired Tasks enabled");
+                                          globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled, alwaysShowExpiredTasks: globals.alwaysShowExpiredTasks, autoMonthOldDelete: globals.autoMonthOldDelete));
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      child: Text(
+                                        globals.alwaysShowExpiredTasks ? "Keep enabled" : "Enable",
+                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                      ),
+                                      style: TextButton.styleFrom(backgroundColor: Colors.amber),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        });
+                  });
+                },
+              ),
+              Divider(height: 10),
+              ListTile(
+                title: Row(
+                  children: [
+                    globals.autoMonthOldDelete
+                        ? Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                          )
+                        : Icon(
+                            Icons.cancel,
+                            color: Colors.red,
+                          ),
+                    Text(globals.autoMonthOldDelete ? ' Auto-Delete 1 month old tasks: Yes' : ' Auto-Delete 1 month old tasks: No'),
+                  ],
+                ),
+                onTap: () {
+                  // Navigator.pop close the pop-up while showing the dialog.
+                  // We have to wait till the animations finish, and then open the dialog.
+                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Column(
+                              children: [
+                                const Text("Auto-Delete Old Tasks"),
+                              ],
+                            ),
+                            content: const Text('This option enables/disables expired tasks automatic deletion. Tasks will be deleted when at least 1 month old', textAlign: TextAlign.center),
+                            actions: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          globals.autoMonthOldDelete = false;
+                                          debugPrint("Auto-Delete Old Tasks disabled");
+                                          globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled, alwaysShowExpiredTasks: globals.alwaysShowExpiredTasks, autoMonthOldDelete: globals.autoMonthOldDelete));
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      child: Text(
+                                        globals.autoMonthOldDelete ? "Disable" : "Keep disabled",
+                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                      ),
+                                      style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          globals.autoMonthOldDelete = true;
+                                          debugPrint("Auto-Delete Old Tasks enabled");
+                                          globals.globalSettingsStorage.saveGlobalSettingsToFile(GlobalSettings(lastUniqueGeneratedID: globals.lastUniqueGeneratedID, popUpMessagesEnabled: globals.popUpMessagesEnabled, compactTaskListViewEnabled: globals.compactTaskListViewEnabled, alwaysShowExpiredTasks: globals.alwaysShowExpiredTasks, autoMonthOldDelete: globals.autoMonthOldDelete));
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      child: Text(
+                                        globals.autoMonthOldDelete ? "Keep enabled" : "Enable",
+                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                      ),
+                                      style: TextButton.styleFrom(backgroundColor: Colors.amber),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        });
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+        body: Stack(
+          children: <Widget>[
+            selectViewModeMainWidget(),
+            UserSelectionDropUpWidget(
+              actuallySelectedUser: selectedUser!,
+              key: userSelectionDropUpKey,
+              onUserSelected: (User user) {
+                debugPrint(" > User filter changed to: " + user.name);
+                selectedUser = user;
+                rebuildMainScreen(false, false);
+              },
             ),
           ],
-        ),
-        UserSelectionDropUpWidget(
-          key: userSelectionDropUpKey,
-          onUserSelected: (User user) {
-            debugPrint(" > User filter changed to: " + user.name);
-            selectedUser = user;
-            rebuildMainScreen(false);
-          },
-        ),
-      ]),
-    );
+        ));
   }
 
   Future<void> _wipeAllData() async {
@@ -561,7 +768,7 @@ class MainScreenState extends State<MainScreen> {
     await globals.categoriesStorage.saveCategoriesToFile([]);
     await globals.tasksStorage.saveTasksToFile([]);
     await globals.usersStorage.saveUsersToFile([]);
-    GlobalSettings wipedSettings = GlobalSettings(lastUniqueGeneratedID: 0, popUpMessagesEnabled: true, compactTaskListViewEnabled: false);
+    GlobalSettings wipedSettings = GlobalSettings(lastUniqueGeneratedID: 0, popUpMessagesEnabled: true, compactTaskListViewEnabled: false, alwaysShowExpiredTasks: true, autoMonthOldDelete: true);
     await globals.globalSettingsStorage.saveGlobalSettingsToFile(wipedSettings);
 
     // Deleting all users pictures
@@ -589,16 +796,105 @@ class MainScreenState extends State<MainScreen> {
       return Container();
     }
   }
+
+  Widget _listModeMainWidget() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox(
+          height: 45,
+          child: CategoryHorizontalListView(
+            categories: globals.categories,
+            onChange: (Category val) {
+              selectedCategory = val;
+              rebuildMainScreen(false, false);
+            },
+          ),
+        ),
+        _additionalUserWidgetText(),
+        Expanded(
+          child: _tasksPageMainWidgetBuilder(context, rebuildMainScreen, completeTaskCallback, TaskFilter(startingDate: selectedStartingDate!, endDate: selectedEndDate, category: selectedCategory, user: selectedUser)),
+        ),
+      ],
+    );
+  }
+
+  Widget selectViewModeMainWidget() {
+    if (viewMode == "list") {
+      return _listModeMainWidget();
+    } else {
+      return _calendarModeMainWidget();
+    }
+  }
+
+  Widget _calendarModeMainWidget() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 45,
+          child: CategoryHorizontalListView(
+            categories: globals.categories,
+            onChange: (Category val) {
+              selectedCategory = val;
+              rebuildMainScreen(false, false);
+            },
+          ),
+        ),
+        SizedBox(
+          child: CalendarDatePicker2(
+            config: CalendarDatePicker2Config(
+              calendarType: CalendarDatePicker2Type.range,
+              selectedDayHighlightColor: Colors.amber,
+              dayTextStyle: TextStyle(color: Colors.white),
+              selectedDayTextStyle: TextStyle(color: Colors.black),
+              controlsTextStyle: TextStyle(color: Colors.white, fontSize: 17),
+              weekdayLabelTextStyle: TextStyle(color: Colors.white, fontSize: 17),
+              todayTextStyle: TextStyle(color: Colors.amber),
+              yearTextStyle: TextStyle(color: Colors.white),
+              disableYearPicker: true,
+            ),
+            onValueChanged: (dates) {
+              setState(() {
+                debugPrint("> Calendar view, new dates selected: " + dates.toString());
+
+                if (dates.isNotEmpty) {
+                  if (dates.length == 2) {
+                    selectedStartingDate = dates[0];
+                    selectedEndDate = dates[1];
+                  } else {
+                    selectedStartingDate = dates[0];
+                    selectedEndDate = null;
+                  }
+
+                  calendarRangeSelectedCallback(dates);
+                }
+              });
+            },
+            initialValue: [selectedStartingDate, selectedEndDate],
+          ),
+        ),
+        _additionalUserWidgetText(),
+        Expanded(
+          child: _tasksPageMainWidgetBuilder(context, rebuildMainScreen, completeTaskCallback, TaskFilter(startingDate: selectedStartingDate!, endDate: selectedEndDate, category: selectedCategory, user: selectedUser)),
+        ),
+      ],
+    );
+  }
+
+  void calendarRangeSelectedCallback(List<DateTime?> dates) {
+    selectedTimeOption = "Custom Interval";
+
+  }
 }
 
-List<Widget> listOfTaskBuilder(BuildContext context, void Function(bool restoreSelectedUser) rebuildMainScreenCallback, void Function(Task) taskCompletedCallback, List<Task> filteredTasks) {
+List<Widget> listOfTaskBuilder(BuildContext context, void Function(bool restoreSelectedUser, bool restoreSelectedCategory) rebuildMainScreenCallback, void Function(Task) taskCompletedCallback, List<Task> filteredTasks) {
   List<Widget> taskTiles = [];
 
   for (var i = 0; i < filteredTasks.length; i++) {
     Widget taskTile = TaskTileWidget(
       task: filteredTasks[i],
       onChange: () {
-        rebuildMainScreenCallback(false);
+        rebuildMainScreenCallback(false, false);
       },
       onTaskComplete: (Task val) {
         taskCompletedCallback(val);
@@ -617,18 +913,24 @@ class MainScreen extends StatefulWidget {
 }
 
 class MainScreenAdditionalOptionsDropdown extends StatefulWidget {
-  MainScreenAdditionalOptionsDropdown({Key? key, required this.rebuildMainScreenCallback(bool restoreSelectedUser)}) : super(key: key);
+  MainScreenAdditionalOptionsDropdown({Key? key, required this.rebuildMainScreenCallback(bool restoreSelectedUser, bool restoreSelectedCategory)}) : super(key: key);
 
-  void Function(bool restoreSelectedUser) rebuildMainScreenCallback;
+  void Function(bool restoreSelectedUser, bool restoreSelectedCategory) rebuildMainScreenCallback;
 
   @override
   State<MainScreenAdditionalOptionsDropdown> createState() => MainScreenAdditionalOptionsDropdownState();
 }
 
 class MainScreenTimeIntervalSelectionDropdown extends StatefulWidget {
-  const MainScreenTimeIntervalSelectionDropdown({Key? key, required this.onChange}) : super(key: key);
+
+
+  const MainScreenTimeIntervalSelectionDropdown({Key? key, required this.onChange, required this.viewMode, required this.startingSelectedValue, required this.startingCustomInterval, required this.onSelection}) : super(key: key);
 
   final DateTimeRangeCallback onChange;
+  final StringCallback onSelection;
+  final String viewMode;
+  final String startingSelectedValue;
+  final List<DateTime?> startingCustomInterval;
 
   @override
   State<MainScreenTimeIntervalSelectionDropdown> createState() => MainScreenTimeIntervalSelectionDropdownState();
@@ -639,8 +941,9 @@ typedef void DateTimeRangeCallback(List<DateTime?> val);
 class MainMenuBottomNavBar extends StatefulWidget {
   final GlobalKey? userDropUpWidgetKey;
   final Function? showUserDropUpFunction;
+  final StringCallback changedViewModeCallback;
 
-  const MainMenuBottomNavBar({Key? key, this.userDropUpWidgetKey, this.showUserDropUpFunction}) : super(key: key);
+  const MainMenuBottomNavBar({Key? key, this.userDropUpWidgetKey, this.showUserDropUpFunction, required this.changedViewModeCallback}) : super(key: key);
 
   @override
   State<MainMenuBottomNavBar> createState() => MainMenuBottomNavBarState();
@@ -655,59 +958,98 @@ class MainScreenAdditionalOptionsDropdownState extends State<MainScreenAdditiona
         onSelected: (int value) {
           setState(() {
             selectedValue = value;
-            debugPrint(selectedValue.toString());
             if (value == 1) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen())).then((_) => setState(() {
-                    widget.rebuildMainScreenCallback(false); // TODO: check if needed
+              Navigator.push(context, MaterialPageRoute(builder: (context) => CategoriesScreen())).then((_) => setState(() {
+                    widget.rebuildMainScreenCallback(false, false); // TODO: check if needed
                   }));
             }
             if (value == 2) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => CategoriesScreen())).then((_) => setState(() {
-                    widget.rebuildMainScreenCallback(false); // TODO: check if needed
-                  }));
-            }
-            if (value == 3) {
               Navigator.push(context, MaterialPageRoute(builder: (context) => UserScreen())).then((_) => setState(() {
-                    widget.rebuildMainScreenCallback(true);
+                    widget.rebuildMainScreenCallback(true, false);
                   }));
             }
           });
         },
         itemBuilder: (context) => [
               PopupMenuItem(
-                child: const Text("Search"),
+                child: const Text("Manage Categories"),
                 value: 1,
                 onTap: () {},
               ),
               PopupMenuItem(
-                child: const Text("Manage Categories"),
-                value: 2,
-                onTap: () {},
-              ),
-              PopupMenuItem(
                 child: const Text("Manage Users"),
-                value: 3,
+                value: 2,
                 onTap: () {},
               ),
             ]);
   }
 }
 
-List<Task> getSelectedTasksList(TaskFilter selectionFilter) {
-  List<Task> allTasks = globals.tasks;
-  return selectionFilter.applyTo(allTasks,true);
-}
-
-Widget _tasksPageMainWidgetBuilder(context, void Function(bool restoreSelectedUser) callback, void Function(Task) completeTaskCallback, TaskFilter selectionFilter) {
+Widget _tasksPageMainWidgetBuilder(context, void Function(bool restoreSelectedUser, bool restoreSelectedCategory) callback, void Function(Task) completeTaskCallback, TaskFilter selectionFilter) {
   List<Task> filteredTasks = getSelectedTasksList(selectionFilter);
+  List<Task> expiredTasks = getExpiredTasksList(selectionFilter);
+
+  bool isExpiredOptionSelected = DateTime(0).toString() == selectionFilter.startingDate.toString();
+
+  List<Widget> expiredTasksWidgets = isExpiredOptionSelected == false ? _expiredTasksWidgetBuilder(context, callback, completeTaskCallback, selectionFilter) : [];
+  List<Widget> filteredTasksWidgets = listOfTaskBuilder(context, callback, completeTaskCallback, filteredTasks);
 
   if (filteredTasks.isNotEmpty) {
-    return ListView(
-      shrinkWrap: true,
-      children: listOfTaskBuilder(context, callback, completeTaskCallback, filteredTasks),
-    );
+    if (globals.activeViewMode == "list") {
+      return ListView(
+        shrinkWrap: true,
+        children: filteredTasksWidgets + expiredTasksWidgets,
+      );
+    } else {
+      return ListView(
+        shrinkWrap: true,
+        children: filteredTasksWidgets,
+      );
+    }
+  } else if (filteredTasks.isEmpty && (globals.alwaysShowExpiredTasks == true && expiredTasks.isNotEmpty)) {
+    if (globals.activeViewMode == "list") {
+      return ListView(
+        children: [_noTasksWidgetBuilder()] + expiredTasksWidgets,
+      );
+    } else {
+      return ListView(
+        children: [_noTasksWidgetBuilder()],
+      );
+    }
   } else {
-    return _noTasksWidgetBuilder();
+    return Column(
+      children: [
+        Container(
+          height: MediaQuery.of(context).size.height * 0.175,
+        ),
+        _noTasksWidgetBuilder(),
+      ],
+    );
+  }
+}
+
+List<Widget> _expiredTasksWidgetBuilder(context, void Function(bool restoreSelectedUser, bool restoreSelectedCategory) callback, void Function(Task p1) completeTaskCallback, TaskFilter selectionFilter) {
+  if (globals.alwaysShowExpiredTasks == true) {
+    List<Task> expiredTasks = getExpiredTasksList(selectionFilter);
+    if (expiredTasks.isNotEmpty) {
+      List<Widget> widgets = [
+        Container(height: 20),
+        Container(height: 2, color: Colors.amber),
+        Container(height: 10),
+        Text(
+          "🕟 Expired Tasks:",
+          style: TextStyle(fontSize: 15, color: Colors.white),
+          textAlign: TextAlign.center,
+        ),
+        Container(height: 10),
+      ];
+
+      return widgets + listOfTaskBuilder(context, callback, completeTaskCallback, expiredTasks);
+    } else {
+      return [];
+    }
+  } else {
+    return [];
   }
 }
 
@@ -716,7 +1058,6 @@ Widget _noTasksWidgetBuilder() {
       child: Padding(
     padding: const EdgeInsets.all(50),
     child: SizedBox(
-      height: 300,
       child: Column(
         children: const [
           Text("No tasks found!", style: TextStyle(fontSize: 24, color: Colors.white)),
@@ -761,9 +1102,11 @@ class MainMenuBottomNavBarState extends State<MainMenuBottomNavBar> {
       }
       if (index == 1) {
         debugPrint("Switch to list view");
+        widget.changedViewModeCallback("list");
       }
       if (index == 2) {
         debugPrint("Switch to calendar view");
+        widget.changedViewModeCallback("calendar");
       }
     });
   }
@@ -786,42 +1129,40 @@ class MainMenuBottomNavBarState extends State<MainMenuBottomNavBar> {
 }
 
 class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeIntervalSelectionDropdown> {
-  String dropdownValue = 'Today';
   List<DateTime?> customInterval = [];
+  String dropdownValue = 'Today';
 
   @override
   Widget build(BuildContext context) {
+    customInterval = widget.startingCustomInterval;
+    dropdownValue = widget.startingSelectedValue;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
               value: dropdownValue,
               icon: const Icon(Icons.arrow_drop_down),
-              onChanged: (String? newValue) {
-                setState(() async {
-                  var oldValue = dropdownValue;
-                  dropdownValue = newValue!;
-                  List<DateTime?> dates = await _getTimeRange(dropdownValue);
-                  if (dates == []) {
-                    dropdownValue = oldValue;
-                    // do not update!
-                  } else {
-                    widget.onChange(dates);
-                  }
+              onChanged: (String? newValue) async {
+                var oldValue = dropdownValue;
+                dropdownValue = newValue!;
+                List<DateTime?> dates = await _getTimeRangeFromSelectedInterval(dropdownValue);
+                if (dates.isEmpty) {
+                  dropdownValue = oldValue;
+                  widget.onChange(dates);
+                } else {
+                  widget.onChange(dates);
+                }
+                if (dropdownValue == "Custom Interval" && dates.isNotEmpty) {
+                  customInterval = dates;
+                }
 
-                  if(dropdownValue == "Custom Interval"){
-                    customInterval = dates;
-                  }else{
-                    customInterval = [];
-                  }
-
-                });
+                widget.onSelection(dropdownValue);
               },
-              items: selectedMainScreenTimeIntervalSelectionDropdownItems)),
+              items: selectedMainScreenTimeIntervalSelectionDropdownItems(widget.viewMode))),
     );
   }
 
-  Future<List<DateTime?>> _getTimeRange(String value) async {
+  Future<List<DateTime?>> _getTimeRangeFromSelectedInterval(String value) async {
     DateTime today = DateTime.now();
     switch (value) {
       case "Today":
@@ -832,6 +1173,8 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
         return [today, DateTime(today.year, today.month, today.day + 7)];
       case "This Month":
         return [today, DateTime(today.year, today.month + 1, today.day)];
+      case "Expired":
+        return [DateTime(0), DateTime.now().subtract(Duration(days: 1))];
       case "Custom Interval":
         return await _dateTimeRangeSelection();
       default:
@@ -842,92 +1185,95 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
   Future<List<DateTime?>> _dateTimeRangeSelection() async {
     DateTime today = DateTime.now();
     DateTimeRange dateRange;
-    if(customInterval.isEmpty) {
+    if (customInterval.isEmpty) {
       dateRange = DateTimeRange(start: today, end: DateTime(today.year, today.month, today.day + 4));
-    }else{
+    } else {
       dateRange = DateTimeRange(start: customInterval[0]!, end: customInterval[1]!);
     }
 
-    DateTimeRange? newDateRange = await showDateRangePicker(
-        context: context,
-        initialDateRange: dateRange,
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2500),
-        helpText: "Time Range Selection",
-        builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.dark(
-                primary: Colors.amber,
-                onPrimary: Colors.black,
-                onSurface: Colors.black,
-                surface: Colors.white,
-                background: Colors.white,
-              ),
-              textButtonTheme: TextButtonThemeData(
-                style: TextButton.styleFrom(
-                  primary: Colors.black, // button text color
-                ),
-              ),
-            ),
-            child: child!,
-          );
-        });
+    var newDateRange = await showCalendarDatePicker2Dialog(
+      context: context,
+      config: CalendarDatePicker2WithActionButtonsConfig(
+        calendarType: CalendarDatePicker2Type.range,
+        selectedDayHighlightColor: Colors.amber,
+        dayTextStyle: TextStyle(color: Colors.black),
+        selectedDayTextStyle: TextStyle(color: Colors.white),
+        controlsTextStyle: TextStyle(color: Colors.black, fontSize: 17),
+        weekdayLabelTextStyle: TextStyle(color: Colors.black, fontSize: 17),
+        todayTextStyle: TextStyle(color: Colors.amber),
+      ),
+      dialogSize: const Size(325, 400),
+      initialValue: [],
+      borderRadius: BorderRadius.circular(15),
+    );
 
     if (newDateRange == null) {
       return [];
     } else {
-      return [newDateRange.start, newDateRange.end];
+      return newDateRange;
     }
   }
 
-  List<DropdownMenuItem<String>> get selectedMainScreenTimeIntervalSelectionDropdownItems {
+  List<DropdownMenuItem<String>> selectedMainScreenTimeIntervalSelectionDropdownItems(String viewMode) {
     List<DropdownMenuItem<String>> items = [
-      DropdownMenuItem(child: Text("Today"), value: "Today"),
-      DropdownMenuItem(child: Text("Tomorrow"), value: "Tomorrow"),
-      DropdownMenuItem(child: Text("This Week"), value: "This Week"),
-      DropdownMenuItem(child: Text("This Month"), value: "This Month"),
-      DropdownMenuItem(child: _getCustomIntervalDropDownText(dropdownValue), value: "Custom Interval"),
+      DropdownMenuItem(
+          child: Text(
+            "Today",
+            style: TextStyle(fontSize: 17),
+          ),
+          value: "Today"),
+      DropdownMenuItem(
+          child: Text(
+            "Tomorrow",
+            style: TextStyle(fontSize: 17),
+          ),
+          value: "Tomorrow"),
+      DropdownMenuItem(
+          child: Text(
+            "This Week",
+            style: TextStyle(fontSize: 17),
+          ),
+          value: "This Week"),
+      DropdownMenuItem(
+          child: Text(
+            "This Month",
+            style: TextStyle(fontSize: 17),
+          ),
+          value: "This Month"),
+      DropdownMenuItem(
+          child: Text(
+            "Expired",
+            style: TextStyle(fontSize: 17),
+          ),
+          value: "Expired"),
     ];
-    return items;
-  }
 
-  Widget _getCustomIntervalDropDownText(String dropdownValue) {
-    if (dropdownValue != "Custom Interval") {
-      return Text("Custom Interval");
-    } else {
-      return Text(monthToText(customInterval[0]!.month) + " " + customInterval[0]!.day.toString() + " - " + monthToText(customInterval[1]!.month) + " " + customInterval[1]!.day.toString());
+    if (viewMode == "list") {
+      items.add(DropdownMenuItem(child: _getCustomIntervalDropDownActiveText(dropdownValue, customInterval), value: "Custom Interval"));
     }
+    return items;
   }
 }
 
-String monthToText(int month) {
-  switch (month) {
-    case 1:
-      return ("Jan");
-    case 2:
-      return ("Feb");
-    case 3:
-      return ("Mar");
-    case 4:
-      return ("Apr");
-    case 5:
-      return ("May");
-    case 6:
-      return ("Jun");
-    case 7:
-      return ("Jul");
-    case 8:
-      return ("Aug");
-    case 9:
-      return ("Sep");
-    case 10:
-      return ("Oct");
-    case 11:
-      return ("Nov");
-    case 12:
-      return ("Dec");
-    default:
-      return ("ERROR");
+Widget _getCustomIntervalDropDownActiveText(String dropdownValue, List<DateTime?> customInterval) {
+  if (dropdownValue != "Custom Interval") {
+    return Text("Custom Interval", style: TextStyle(fontSize: 17));
+  } else if (customInterval.length == 0) {
+    return Text("Custom Interval");
+  } else if (monthToText(customInterval[0]!.month) == monthToText(customInterval[1]!.month) && customInterval[0]!.day.toString() == customInterval[1]!.day.toString()) {
+    return Text(monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(), style: TextStyle(fontSize: 17));
+  } else {
+    return Text(monthToText(customInterval[0]!.month) + " " + customInterval[0]!.day.toString() + " - " + monthToText(customInterval[1]!.month) + " " + customInterval[1]!.day.toString(), style: TextStyle(fontSize: 17));
+  }
+}
+
+Widget _getCalendarViewActiveText(List<DateTime?> customInterval) {
+  TextStyle style = TextStyle(fontSize: 20);
+  if (customInterval[1] == null) {
+    return Text(monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(), style: style);
+  } else if (monthToText(customInterval[0]!.month) == monthToText(customInterval[1]!.month) && customInterval[0]!.day.toString() == customInterval[1]!.day.toString()) {
+    return Text(monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(), style: style);
+  } else {
+    return Text(monthToText(customInterval[0]!.month) + " " + customInterval[0]!.day.toString() + " - " + monthToText(customInterval[1]!.month) + " " + customInterval[1]!.day.toString(), style: style);
   }
 }
