@@ -60,12 +60,12 @@ class CategoriesScreenState extends State<CategoriesScreen> {
         height: 300,
         child: Column(
           children: const [
-            Text("No categories found!", style: TextStyle(fontSize: 24, color: Colors.white)),
+            Text("No Categories Found!", style: TextStyle(fontSize: 24, color: Colors.white)),
             Padding(
               padding: EdgeInsets.all(12),
-              child: Text("😥",
+              child: Text("😭",
                   style: TextStyle(
-                    fontSize: 70,
+                    fontSize: 45, // !!! WARNING: if too big: BUG on RENDER
                   )),
             ),
             Text(
@@ -103,144 +103,142 @@ class CategoriesGridVisualizerState extends State<CategoriesGridVisualizer> {
     return GridView.count(
       crossAxisCount: 2,
       children: List.generate(categoriesList.length, (index) {
-        return Theme(
-          data: ThemeData(textTheme: Theme.of(context).textTheme.apply(bodyColor: Colors.white)),
-          child: Center(
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(5.0),
             child: Padding(
               padding: EdgeInsets.only(left: (index + 1) % 2 * additionalBordersPad, right: index % 2 * additionalBordersPad),
-              child: Padding(
-                padding: const EdgeInsets.all(2.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: TextButton(
-                    onPressed: () {},
-                    onLongPress: () {},
-                    child: GestureDetector(
-                      onTapDown: (TapDownDetails details) {
-                        setState(() {
-                          _tapDownPosition = details.globalPosition;
-                        });
-                      },
-                      onLongPress: () {
-                        showMenu(
-                            context: context,
-                            position: RelativeRect.fromLTRB(
-                              _tapDownPosition.dx,
-                              _tapDownPosition.dy,
-                              _tapDownPosition.dx,
-                              _tapDownPosition.dy,
+              child: SizedBox(
+                width: double.infinity,
+                height: double.infinity,
+                child: TextButton(
+                  onPressed: () {},
+                  onLongPress: () {},
+                  child: GestureDetector(
+                    onTapDown: (TapDownDetails details) {
+                      setState(() {
+                        _tapDownPosition = details.globalPosition;
+                      });
+                    },
+                    onLongPress: () {
+                      showMenu(
+                          context: context,
+                          position: RelativeRect.fromLTRB(
+                            _tapDownPosition.dx,
+                            _tapDownPosition.dy,
+                            _tapDownPosition.dx,
+                            _tapDownPosition.dy,
+                          ),
+                          items: <PopupMenuEntry>[
+                            PopupMenuItem(
+                              onTap: () {
+                                // Navigator.pop close the pop-up while showing the dialog.
+                                // We have to wait till the animations finish, and then open the dialog.
+                                WidgetsBinding.instance?.addPostFrameCallback((_) {
+                                  showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text("🔥 Confirm Category Delete?"),
+                                          content: const Text("Tasks from this category will be moved to default category \"🏠 All\".\nYou can't undo this operation"),
+                                          actions: <Widget>[
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: <Widget>[
+                                                  FloatingActionButton(
+                                                    heroTag: "UndoCategoryDelete",
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        debugPrint("Category delete cancelled!");
+                                                        Navigator.of(context).pop();
+                                                      });
+                                                    },
+                                                    tooltip: "Cancel",
+                                                    child: const Icon(Icons.cancel),
+                                                  ),
+                                                  FloatingActionButton(
+                                                    heroTag: "ConfirmDelete",
+                                                    backgroundColor: Colors.redAccent,
+                                                    onPressed: () {
+                                                      debugPrint("Category Delete confirmed!");
+                                                      categories.deleteCategory(index + 1).then((_) => setState(() {}));
+                                                      Navigator.of(context).pop();
+                                                      showPopUpMessage(context, "💣", "Category Deleted!", null);
+                                                    },
+                                                    tooltip: "Confirm",
+                                                    child: const Icon(Icons.delete),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      });
+                                });
+                              },
+                              value: 0,
+                              child: Row(
+                                children: const <Widget>[
+                                  Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  Text(
+                                    "Delete",
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ],
+                              ),
                             ),
-                            items: <PopupMenuEntry>[
-                              PopupMenuItem(
-                                onTap: () {
-                                  // Navigator.pop close the pop-up while showing the dialog.
-                                  // We have to wait till the animations finish, and then open the dialog.
-                                  WidgetsBinding.instance?.addPostFrameCallback((_) {
+                            PopupMenuItem(
+                              onTap: () {
+                                // Navigator.pop close the pop-up while showing the dialog.
+                                // We have to wait till the animations finish, and then open the dialog.
+                                WidgetsBinding.instance?.addPostFrameCallback((_) {
+                                  setState(() {
                                     showDialog(
                                         context: context,
                                         builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text("🔥 Confirm category delete?"),
-                                            content: const Text("Tasks from this category will be moved to default category \"🏠 All\".\nYou can't undo this operation"),
-                                            actions: <Widget>[
-                                              Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: <Widget>[
-                                                    FloatingActionButton(
-                                                      heroTag: "UndoCategoryDelete",
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          debugPrint("Category delete cancelled!");
-                                                          Navigator.of(context).pop();
-                                                        });
-                                                      },
-                                                      tooltip: "Cancel",
-                                                      child: const Icon(Icons.cancel),
-                                                    ),
-                                                    FloatingActionButton(
-                                                      heroTag: "ConfirmDelete",
-                                                      backgroundColor: Colors.redAccent,
-                                                      onPressed: () {
-                                                        debugPrint("Category Delete confirmed!");
-                                                        categories.deleteCategory(index + 1).then((_) => setState(() {}));
-                                                        Navigator.of(context).pop();
-                                                        showPopUpMessage(context, "💣","Category deleted!", null);
-                                                      },
-                                                      tooltip: "Confirm",
-                                                      child: const Icon(Icons.delete),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        });
+                                          return CategoryDialogForm(modifyMode: true, modifyIndex: index + 1);
+                                        }).then((_) => setState(() {}));
                                   });
-                                },
-                                value: 0,
-                                child: Row(
-                                  children: const <Widget>[
-                                    Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                    Text(
-                                      "Delete",
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ],
-                                ),
+                                });
+                              },
+                              value: 1,
+                              child: Row(
+                                children: const <Widget>[
+                                  Icon(Icons.edit),
+                                  Text("Modify"),
+                                ],
                               ),
-                              PopupMenuItem(
-                                onTap: () {
-                                  // Navigator.pop close the pop-up while showing the dialog.
-                                  // We have to wait till the animations finish, and then open the dialog.
-                                  WidgetsBinding.instance?.addPostFrameCallback((_) {
-                                    setState(() {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return CategoryDialogForm(modifyMode: true, modifyIndex: index + 1);
-                                          }).then((_) => setState(() {}));
-                                    });
-                                  });
-                                },
-                                value: 1,
-                                child: Row(
-                                  children: const <Widget>[
-                                    Icon(Icons.edit),
-                                    Text("Modify"),
-                                  ],
-                                ),
-                              )
-                            ]);
-                      },
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                        color: const Color.fromRGBO(70, 70, 70, 100),
-                        child: Center(
-                            child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              categoriesList[index].emoji,
-                              style: const TextStyle(fontSize: 50),
-                            ),
-                            Container(
-                              height: 7,
-                            ),
-                            Text(
-                              categoriesList[index].name,
-                              style: const TextStyle(fontSize: 24),
-                            ),
-                          ],
-                        )),
+                            )
+                          ]);
+                    },
+                    child: Card(
+                      margin: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0),
                       ),
+                      color: const Color.fromRGBO(70, 70, 70, 100),
+                      child: Center(
+                          child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            categoriesList[index].emoji,
+                            style: const TextStyle(fontSize: 50),
+                          ),
+                          Container(
+                            height: 7,
+                          ),
+                          Text(
+                            categoriesList[index].name,
+                            style: const TextStyle(fontSize: 24, color: Colors.white),
+                          ),
+                        ],
+                      )),
                     ),
                   ),
                 ),

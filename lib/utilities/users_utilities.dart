@@ -11,49 +11,55 @@ Future<void> createNewUser(String name, File? image) async {
 
   User newUser = User(name: name, score: 0);
   globals.users.add(newUser);
+
   if (image != null) {
     await globals.usersStorage.saveUserImage(name, image);
     newUser.image = image;
   }
   debugPrint("\n > New User saved!\n" + serializeUser(newUser));
+
   await globals.usersStorage.saveUsersToFile(globals.users);
 }
 
-Future<void> modifyUserByName(String oldName, String newName, int oldScore, File? newImage) async {
+Future<void> modifyUserByName(String oldName, String newName, int score, File? newImage, bool updateScoreMode) async {
   newName = newName.capitalize();
 
   int index = getIndexOfUserByName(oldName);
   User oldUser = globals.users[index];
-  File? oldImage = oldUser.image;
-  User newUser = User(name: newName, score: oldScore);
+  String oldUserName = oldUser.name;
 
-  if (newImage != null) {
-    // ... there is a new image
-    await globals.usersStorage.deleteUserImage(oldName); // ...then delete the old one
-    await globals.usersStorage.saveUserImage(newName, newImage); // ... save the new one
-    newUser.image = newImage;
-  } else if (oldUser.image != null) {
-    // ... there were an image, re-use it
-    await globals.usersStorage.updateUserImageFilename(oldName, newName); // rename image
-    newUser.image = oldUser.image;
-  } else {
-    // no image at all...
+  oldUser.name = newName;
+  oldUser.score = score;
+
+  File? oldImage = oldUser.image;
+
+  if(!updateScoreMode) {
+    if (newImage != null) {
+      // ... there is a new image
+      await globals.usersStorage.saveUserImage(newName, newImage); // ... save the new one
+      oldUser.image = newImage;
+    } else if (oldUser.image != null && newName == oldName) {
+      // ... there were an image, re-use it (name is the same!) | actually no changes
+      oldUser.image = oldImage;
+    } else if (oldUser.image != null && newName != oldName) {
+      await globals.usersStorage.updateUserImageFilename(oldName, newName); // rename image
+    }
   }
-  globals.users[index] = newUser; // Swap old user with new one
+
   debugPrint("\n > Modified user with index " + index.toString());
   debugPrint("Now users are: " + globals.users.toString());
-  _updateTaskWithMatchingUser(oldUser, index);
+  await _updateTaskWithMatchingUser(oldUserName, index);
   await globals.usersStorage.saveUsersToFile(globals.users);
 }
 
-Future<void> _updateTaskWithMatchingUser(User oldUser, int newUserIndex) async {
+Future<void> _updateTaskWithMatchingUser(String oldUserName, int newUserIndex) async {
   List<Task> tasks = globals.tasks;
   for (int i = 0; i <= tasks.length - 1; i++) {
     Task task = tasks[i];
-    if (task.user.name == oldUser.name) {
+    if (task.user.name == oldUserName) {
       task.user = globals.users[newUserIndex];
     }
-    if (task.getUserThatCompleted() != null && task.getUserThatCompleted()!.name == oldUser.name) {
+    if (task.getUserThatCompleted() != null && task.getUserThatCompleted()!.name == oldUserName) {
       task.setUserThatCompleted(globals.users[newUserIndex]);
     }
   }
@@ -66,10 +72,11 @@ Future<void> deleteUser(User user) async {
   debugPrint("\n > Delete class with name: " + user.name);
   int index = getIndexOfUserByName(user.name);
   User oldUser = globals.users[index];
+  String oldUserName = oldUser.name;
   globals.users.removeAt(index);
   globals.usersStorage.deleteUserImage(oldUser.name);
   debugPrint("Now users are: " + globals.users.toString());
-  _updateTaskWithMatchingUser(oldUser, 0);
+  _updateTaskWithMatchingUser(oldUserName, 0);
   await globals.usersStorage.saveUsersToFile(globals.users);
 }
 

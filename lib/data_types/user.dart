@@ -19,7 +19,7 @@ class User {
   Future<void> addScore(int add) async {
     debugPrint(" > User " + name + " received " + add.toString() + "⭐");
     int newScore = score+add;
-    await users.modifyUserByName(name, name, newScore, image);
+    await users.modifyUserByName(name, name, newScore, image, true);
   }
 
   Future<void> removeScore(int remove) async {
@@ -29,6 +29,6 @@ class User {
     }
     score = newScore;
     debugPrint(" > User " + name + " lost " + remove.toString() + "⭐");
-    await users.modifyUserByName(name, name, newScore, image);;
+    await users.modifyUserByName(name, name, newScore, image, true);
   }
 }

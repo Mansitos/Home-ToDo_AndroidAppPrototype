@@ -90,7 +90,7 @@ class UserDialogFormState extends State<UserDialogForm> {
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: Text("🙂 Select user picture"),
+                                title: Text("📷 Select User Picture"),
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -204,23 +204,24 @@ class UserDialogFormState extends State<UserDialogForm> {
                 padding: const EdgeInsets.all(10.0),
                 child: FloatingActionButton(
                   heroTag: "ConfirmUser",
-                  onPressed: () {
-                    setState(() async {
+                  onPressed: () async {
                       debugPrint("Confirm user creation/modify button pressed!");
                       if (_formKey.currentState!.validate()) {
                         debugPrint("Ok! Valid category form!");
                         if (widget.modifyMode == false) {
                           Navigator.of(context).pop();
                           await createNewUser(userName, userImage);
-                          showPopUpMessage(context, "✅", "User created!", null);
+                          showPopUpMessage(context, "✅", "User Created!", null);
                         } else {
                           Navigator.of(context).pop();
-                          await modifyUserByName(oldUserName, userName, oldScore, userImage);
-                          showPopUpMessage(context, "✅", "User modified!", null);
+                          await modifyUserByName(oldUserName, userName, oldScore, userImage, false);
+                          showPopUpMessage(context, "✅", "User Modified!", null);
                         }
                       } else {
                         debugPrint("Error! Validation failed in user creation form!");
                       }
+
+                    setState(() {
                       widget.onChange();
                     });
                   },

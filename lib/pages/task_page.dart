@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:home_to_do/custom_widgets/custom_interval_form_dialog.dart';
 import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/custom_widgets/score_selection_widget.dart';
 import 'package:home_to_do/data_types/category.dart';
 import 'package:home_to_do/data_types/task.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
+import 'package:home_to_do/utilities/generic_utilities.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 import 'package:home_to_do/utilities/task_utilities.dart';
 import 'package:home_to_do/utilities/users_utilities.dart';
@@ -24,22 +26,24 @@ class TaskScreen extends StatefulWidget {
 
 class TaskScreenState extends State<TaskScreen> {
   Category startingSelectedCategory = globals.categories[0];
-  DateTime startingSelectedDate = DateTime.now();
-  TimeOfDay startingSelectedHour = TimeOfDay.now();
-  bool startingSelectedReminder = false;
+  TimeOfDay startingSelectedHour = TimeOfDay.now().plusMinutes(60);
+  DateTime startingSelectedDate = _getStartingDate(TimeOfDay.now().plusMinutes(60));
   int startingSelectedScore = 3;
   User startingSelectedUser = globals.users[0];
   String startingSelectedRepeat = "No";
+  bool startingSelectedNotification = false;
 
   String? selectedName;
   String? selectedDescription;
   Category? selectedCategory;
   DateTime? selectedDate;
   TimeOfDay? selectedHour;
-  bool? selectedReminder;
-  int? selectedScore; // the value is the default one
+  int? selectedScore;
   User? selectedUser;
   String? selectedRepeat;
+  bool? selectedNotification;
+
+  int? customDayInterval;
 
   MediaQueryData? queryData;
   double screenWidth = 0;
@@ -111,10 +115,22 @@ class TaskScreenState extends State<TaskScreen> {
           );
         },
         context: context,
-        initialTime: TimeOfDay.now());
+        initialTime: _getSelectedHour()!);
     setState(() {
       if (picked != null) {
         selectedHour = picked;
+
+        if (_getSelectedDate()!.year == DateTime.now().year && _getSelectedDate()!.month == DateTime.now().month && _getSelectedDate()!.day == DateTime.now().day) {
+          if (picked.hour < TimeOfDay.now().hour) {
+            // past date...
+            selectedHour = TimeOfDay.now().plusMinutes(1);
+          } else if (picked.hour == TimeOfDay.now().hour && picked.minute < TimeOfDay.now().minute) {
+            // past date
+            selectedHour = TimeOfDay.now().plusMinutes(1);
+          } else {
+            // ok case!
+          }
+        }
         //TODO: add validation?
         debugPrint(selectedHour.toString() + " selected!");
       }
@@ -187,9 +203,8 @@ class TaskScreenState extends State<TaskScreen> {
                       style: const TextStyle(fontSize: 18),
                       decoration: const InputDecoration(hintText: "Insert task name...", labelText: "Task name", labelStyle: TextStyle(color: Colors.white), hintStyle: TextStyle(color: Colors.white), counterStyle: TextStyle(color: Colors.white))),
                 ),
-                const Divider(),
                 Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 20),
+                  padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10),
                   child: TextFormField(
                       initialValue: selectedDescription,
                       onSaved: (String? value) {
@@ -214,7 +229,9 @@ class TaskScreenState extends State<TaskScreen> {
                       style: const TextStyle(fontSize: 18),
                       decoration: const InputDecoration(hintText: "Insert task description...", labelText: "Task description", labelStyle: TextStyle(color: Colors.white), hintStyle: TextStyle(color: Colors.white), counterStyle: TextStyle(color: Colors.white))),
                 ),
-                const Divider(),
+                const Divider(
+                  height: 8,
+                ),
                 SizedBox(
                   child: ListTile(
                     leading: const Icon(
@@ -239,7 +256,9 @@ class TaskScreenState extends State<TaskScreen> {
                     ),
                   ),
                 ),
-                const Divider(),
+                const Divider(
+                  height: 8,
+                ),
                 ListTile(
                   leading: const Icon(
                     Icons.access_time_filled,
@@ -262,7 +281,9 @@ class TaskScreenState extends State<TaskScreen> {
                     ],
                   ),
                 ),
-                const Divider(),
+                const Divider(
+                  height: 8,
+                ),
                 ListTile(
                   leading: const Icon(
                     Icons.repeat,
@@ -274,16 +295,23 @@ class TaskScreenState extends State<TaskScreen> {
                       setState(() {});
                     },
                     selectedRepeat: _getSelectedRepeat()!,
+                    customDayIntervalChange: (int val) {
+                      customDayInterval = val;
+                    },
+                    customDayInterval: customDayInterval,
+                    mode: widget.mode!,
                   ),
                 ),
-                const Divider(),
+                const Divider(
+                  height: 8,
+                ),
                 ListTile(
                   leading: const Icon(
                     Icons.notifications,
                     color: Colors.white,
                   ),
                   title: const Text(
-                    'Reminder',
+                    'Notification',
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -293,16 +321,18 @@ class TaskScreenState extends State<TaskScreen> {
                         child: ElevatedButton(
                             onPressed: () {
                               setState(() {
-                                selectedReminder = !_getReminderValue()!;
-                                debugPrint("Reminder selection: " + selectedReminder.toString());
+                                selectedNotification = !_getSelectedNotification()!;
+                                debugPrint("Notification selection: " + selectedNotification.toString());
                               });
                             },
-                            child: Text(_boolToYesNo(_getReminderValue()))),
+                            child: Text(_boolToYesNo(_getSelectedNotification()))),
                       ),
                     ],
                   ),
                 ),
-                const Divider(),
+                const Divider(
+                  height: 8,
+                ),
                 ListTile(
                   leading: const Icon(
                     Icons.person,
@@ -317,7 +347,9 @@ class TaskScreenState extends State<TaskScreen> {
                     selectedUser: _getSelectedUser()!,
                   ),
                 ),
-                const Divider(),
+                const Divider(
+                  height: 8,
+                ),
                 ListTile(
                   leading: const Icon(
                     Icons.star,
@@ -337,7 +369,9 @@ class TaskScreenState extends State<TaskScreen> {
                     },
                   ),
                 ),
-                const Divider(),
+                const Divider(
+                  height: 8,
+                ),
                 Container(height: 75),
               ],
             ),
@@ -366,17 +400,17 @@ class TaskScreenState extends State<TaskScreen> {
                         if (_formKey.currentState!.validate()) {
                           if (widget.mode == "Add") {
                             setState(() {
-                              createNewTask(selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!, _getSelectedRepeat()!);
+                              createNewTask(selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!, _getSelectedRepeat()!, _getSelectedNotification()!);
                             });
                           }
                           if (widget.mode == "Add") {
-                            showPopUpMessage(context, _getRandomConfirmationEmoji(), "Task created!", null, additionalPops: 1);
+                            showPopUpMessage(context, _getRandomConfirmationEmoji(), "Task Created!", null, additionalPops: 1);
                           } else if (widget.mode == "Modify") {
                             showDialog(
                                 context: context,
                                 builder: (BuildContext context) {
                                   return AlertDialog(
-                                    title: Text("📝 Confirm task changes?"),
+                                    title: Text("📝 Confirm Task Changes?"),
                                     actions: <Widget>[
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
@@ -399,9 +433,9 @@ class TaskScreenState extends State<TaskScreen> {
                                               heroTag: "ConfirmModify",
                                               onPressed: () {
                                                 debugPrint("Task modify confirmed!");
-                                                modifyTask(widget.taskToModify!, selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!, _getSelectedRepeat()!);
+                                                modifyTask(widget.taskToModify!, selectedName!, selectedDescription!, _getSelectedCategory()!, _getSelectedDate()!, _getSelectedHour()!, _getSelectedScore()!, _getSelectedUser()!, _getSelectedRepeat()!, _getSelectedNotification()!);
                                                 Navigator.of(context).pop();
-                                                showPopUpMessage(context, "✅", "Task modified!", null, additionalPops: 1);
+                                                showPopUpMessage(context, "✅", "Task Modified!", null, additionalPops: 1);
                                               },
                                               tooltip: "Confirm",
                                               child: const Icon(Icons.check),
@@ -454,19 +488,19 @@ class TaskScreenState extends State<TaskScreen> {
     }
   }
 
-  bool? _getReminderValue() {
-    if (selectedReminder == null) {
-      return startingSelectedReminder;
-    } else {
-      return selectedReminder;
-    }
-  }
-
   User? _getSelectedUser() {
     if (selectedUser == null) {
       return startingSelectedUser;
     } else {
       return selectedUser;
+    }
+  }
+
+  bool? _getSelectedNotification() {
+    if (selectedNotification == null) {
+      return startingSelectedNotification;
+    } else {
+      return selectedNotification;
     }
   }
 
@@ -489,8 +523,10 @@ class TaskScreenState extends State<TaskScreen> {
   String? _getSelectedRepeat() {
     if (selectedRepeat == null) {
       return startingSelectedRepeat;
-    } else {
+    } else if (customDayInterval == 0) {
       return selectedRepeat;
+    } else if (customDayInterval != 0) {
+      return customDayInterval.toString();
     }
   }
 
@@ -512,10 +548,10 @@ class TaskScreenState extends State<TaskScreen> {
     startingSelectedCategory = task.category;
     startingSelectedDate = task.dateLimit;
     startingSelectedHour = task.timeLimit;
-    startingSelectedReminder = false; // TODO: reminder not implemented
     startingSelectedScore = task.score;
     startingSelectedUser = task.user;
     startingSelectedRepeat = task.repeat;
+    startingSelectedNotification = task.notification;
   }
 
   int? _getSelectedScore() {
@@ -527,8 +563,16 @@ class TaskScreenState extends State<TaskScreen> {
   }
 
   String _getRandomConfirmationEmoji() {
-    List<String> confirmationEmojis = ["🚀", "👌", "👍", "🎉","😄","💪","🎉" "⚡", "✅", "✅","✅", "✅", "✅", "✅", "✅"];
+    List<String> confirmationEmojis = ["🚀", "👌", "👍", "🎉", "😄", "💪", "🎉" "⚡", "✅", "✅", "✅", "✅", "✅", "✅", "✅"];
     return confirmationEmojis[Random().nextInt(confirmationEmojis.length)];
+  }
+
+  static DateTime _getStartingDate(TimeOfDay startingTime) {
+    if (startingTime.hour < TimeOfDay.now().hour) {
+      return DateTime.now().add(Duration(days: 1));
+    } else {
+      return DateTime.now();
+    }
   }
 }
 
@@ -605,10 +649,13 @@ List<DropdownMenuItem<String>> selectedUserDropdownItems(Color color) {
     for (var i = 0; i < globals.users.length; i++) {
       String encoded = serializeUser(globals.users[i]);
       items.add(DropdownMenuItem(
-          child: Text(
-            globals.users[i].name,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: color),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 5),
+            child: Text(
+              globals.users[i].name,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: color),
+            ),
           ),
           value: encoded));
     }
@@ -617,10 +664,13 @@ List<DropdownMenuItem<String>> selectedUserDropdownItems(Color color) {
 }
 
 class DropDownRepeat extends StatefulWidget {
-  DropDownRepeat({Key? key, required this.onChange, required this.selectedRepeat}) : super(key: key);
+  DropDownRepeat({Key? key, required this.onChange, required this.selectedRepeat, required this.customDayIntervalChange, required this.customDayInterval, required this.mode}) : super(key: key);
 
   final StringCallback onChange;
   String selectedRepeat;
+  final intCallback customDayIntervalChange;
+  int? customDayInterval;
+  final String mode;
 
   @override
   State<DropDownRepeat> createState() => _DropDownRepeatState();
@@ -631,6 +681,7 @@ class DropDownUsers extends StatefulWidget {
 
   User selectedUser;
   final userCallback onChange;
+
   final Color color = Colors.black;
 
   @override
@@ -662,21 +713,30 @@ class _DropDownRepeatState extends State<DropDownRepeat> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 DropdownButton<String>(
-                    //dropdownColor: const Color.fromRGBO(42, 42, 42, 1),
-                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                    value: widget.selectedRepeat,
-                    icon: null,
-                    underline: Container(
-                      height: 0,
-                    ),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        widget.selectedRepeat = newValue!;
-                        widget.onChange(newValue);
-                      });
-                    },
-                    onTap: () {},
-                    items: repeatSelectionDropdownItems),
+                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                  value: _getSelectedRepeatInitialValue(widget.mode),
+                  icon: null,
+                  underline: Container(
+                    height: 0,
+                  ),
+                  onChanged: (String? newValue) async {
+                    if (newValue == "No" || newValue == "Every Day" || newValue == "Every Week" || newValue == "Every Month") {
+                      widget.selectedRepeat = newValue!;
+                      widget.onChange(newValue);
+                      widget.customDayIntervalChange(0);
+                    } else {
+                      debugPrint("Custom Interval Repeat Selection Procedure...");
+                      if (widget.customDayInterval != null) {
+                        await _customRepeatIntervalSelection(widget.customDayInterval!);
+                      } else {
+                        await _customRepeatIntervalSelection(3);
+                      }
+                    }
+                    setState(() {});
+                  },
+                  onTap: () {},
+                  items: repeatSelectionDropdownItems,
+                ),
               ],
             ),
           ),
@@ -684,18 +744,83 @@ class _DropDownRepeatState extends State<DropDownRepeat> {
       ],
     );
   }
-}
 
-List<DropdownMenuItem<String>> get repeatSelectionDropdownItems {
-  TextStyle textStyle = TextStyle(fontSize: 16, color: Colors.black);
+  Future<void> _customRepeatIntervalSelection(int startingValue) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return CustomIntervalDialogForm(
+              startingDaysInterval: startingValue,
+              onSelect: (int val) {
+                widget.selectedRepeat = "Custom Interval";
+                widget.onChange("Custom Interval");
+                widget.customDayIntervalChange(val);
+                setState(() {});
+              },
+            );
+          });
+    });
+  }
 
-  List<DropdownMenuItem<String>> items = [
-    DropdownMenuItem(child: Text("No", style: textStyle), value: "No"),
-    DropdownMenuItem(child: Text("Every Day", style: textStyle), value: "Every Day"),
-    DropdownMenuItem(child: Text("Every Week", style: textStyle), value: "Every Week"),
-    DropdownMenuItem(child: Text("Custom Interval", style: textStyle), value: "Custom Interval"),
-  ];
-  return items;
+  List<DropdownMenuItem<String>> get repeatSelectionDropdownItems {
+    TextStyle textStyle = TextStyle(fontSize: 16, color: Colors.black);
+
+    List<DropdownMenuItem<String>> items = [
+      DropdownMenuItem(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 5),
+            child: Text("No", style: textStyle),
+          ),
+          value: "No"),
+      DropdownMenuItem(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 5),
+            child: Text("Every Day", style: textStyle),
+          ),
+          value: "Every Day"),
+      DropdownMenuItem(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 5),
+            child: Text("Every 7 Days", style: textStyle),
+          ),
+          value: "Every Week"),
+      DropdownMenuItem(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 5),
+            child: Text("Every 30 Days", style: textStyle),
+          ),
+          value: "Every Month"),
+      DropdownMenuItem(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 5),
+            child: Text(_getCustomIntervalText(), style: textStyle),
+          ),
+          value: "Custom Interval"),
+    ];
+    return items;
+  }
+
+  String _getCustomIntervalText() {
+    if (widget.customDayInterval == null) {
+      if (widget.mode != "Modify") {
+        return "Custom Interval";
+      } else {
+        return "Every " + widget.selectedRepeat + " Days";
+      }
+    } else {
+      return "Every " + widget.customDayInterval.toString() + " Days";
+    }
+  }
+
+  _getSelectedRepeatInitialValue(String mode) {
+    String rep = widget.selectedRepeat;
+    if (rep != "No" && rep != "Every Day" && rep != "Every Week" && rep != "Every Month") {
+      return "Custom Interval";
+    } else {
+      return rep;
+    }
+  }
 }
 
 class _DropDownUsersState extends State<DropDownUsers> {
@@ -723,7 +848,6 @@ class _DropDownUsersState extends State<DropDownUsers> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 DropdownButton<String>(
-                    //dropdownColor: const Color.fromRGBO(42, 42, 42, 1),
                     borderRadius: BorderRadius.all(Radius.circular(10.0)),
                     value: serializeUser(widget.selectedUser),
                     icon: null,

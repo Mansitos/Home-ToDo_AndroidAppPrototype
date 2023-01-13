@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
+import 'package:home_to_do/utilities/generic_utilities.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 
 class CategoryDialogForm extends StatefulWidget {
@@ -23,9 +24,9 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
 
   @override
   Widget build(BuildContext context) {
-    String title = "Create new category";
+    String title = "Create New Category";
     if (widget.modifyMode == true) {
-      title = "Modify category";
+      title = "Modify Category";
       oldCategoryEmoji = globals.categories[widget.modifyIndex].emoji;
       oldCategoryName = globals.categories[widget.modifyIndex].name;
     }
@@ -45,7 +46,7 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                 children: [
                   TextFormField(
                     cursorColor: Colors.amber,
-                    style: const TextStyle(fontSize: 55),
+                    style: const TextStyle(fontSize: 50),
                     initialValue: (() {
                       if (widget.modifyMode == true) {
                         return oldCategoryEmoji;
@@ -68,8 +69,6 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                     validator: (String? value) {
                       // Emoji valid chars
                       final RegExp REGEX_EMOJI = RegExp(r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
-                      print("old:" + oldCategoryName);
-                      print("actual:" + categoryName);
 
                       if (value == null || value.isEmpty) {
                         return 'Please enter an emoji!';
@@ -77,7 +76,10 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                         return 'Only emoji are allowed!';
                       } else if (!checkIfCategoryNameAvailable("", value, oldCategoryEmoji, widget.modifyMode)) {
                         return 'Emoji already used!';
-                      } else {
+                      } else if(value.length > 3){
+                        return 'This Emoji is not compatible';
+                      }
+                      else {
                         categoryEmoji = value;
                         return null;
                       }
@@ -160,11 +162,11 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                         if (widget.modifyMode == false) {
                           Navigator.of(context).pop();
                           createNewCategory(categoryName, categoryEmoji);
-                          showPopUpMessage(context, "✅", "Category created!", null);
+                          showPopUpMessage(context, "✅", "Category Created!", null);
                         } else {
                           Navigator.of(context).pop();
                           modifyCategory(widget.modifyIndex, categoryName, categoryEmoji);
-                          showPopUpMessage(context, "✅", "Category modified!", null);
+                          showPopUpMessage(context, "✅", "Category Modified!", null);
                         }
                       } else {
                         debugPrint("Error! Validation failed in category creation form!");

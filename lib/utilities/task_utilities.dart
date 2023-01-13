@@ -8,28 +8,44 @@ import 'package:home_to_do/utilities/users_utilities.dart';
 import '../data_types/task_filter.dart';
 import 'generic_utilities.dart';
 import 'globals.dart' as globals;
+import 'notification_api.dart';
 
-Future<void> createNewTask(String name, String desc, Category cat, DateTime date, TimeOfDay hour, int score, User user, String repeat) async {
+Future<void> createNewTask(String name, String desc, Category cat, DateTime date, TimeOfDay hour, int score, User user, String repeat, bool notification) async {
   name = name.capitalize();
   desc = desc.capitalize();
 
-  Task newTask = Task(id: globals.generateUniqueTaskID(), name: name, description: desc, category: cat, dateLimit: date, timeLimit: hour, score: score, user: user, repeat: repeat);
+  Task newTask = Task(id: globals.generateUniqueTaskID(), name: name, description: desc, category: cat, dateLimit: date, timeLimit: hour, score: score, user: user, repeat: repeat, notification: notification);
 
   globals.tasks.add(newTask);
+
+  if (notification == true) {
+    LocalNoticeService().addNotification(id: newTask.getID(), title: cat.emoji + " " + name, body: desc, date: DateTime(date.year, date.month, date.day, hour.hour, hour.minute), channel: 'main_channel');
+  }
+
   debugPrint("\n > New task saved!\n" + serializeTask(newTask));
   await globals.tasksStorage.saveTasksToFile(globals.tasks);
+  // Reload is needed so images are reloaded...
+  await globals.tasksStorage.loadTasksFromFile();
 }
 
-Future<void> modifyTask(Task task, String name, String desc, Category cat, DateTime date, TimeOfDay hour, int score, User user, String repeat) async {
+Future<void> modifyTask(Task task, String name, String desc, Category cat, DateTime date, TimeOfDay hour, int score, User user, String repeat, bool notification) async {
   name = name.capitalize();
   desc = desc.capitalize();
 
-  Task modifiedTask = Task(id: task.getID(),name: name, description: desc, category: cat, dateLimit: date, timeLimit: hour, score: score, user: user, repeat: repeat);
+  // Regenerate the local notification
+  LocalNoticeService().cancelNotificationByID(task.getID());
+  if (notification == true) {
+    LocalNoticeService().addNotification(id: task.getID(), title: cat.emoji + " " + name, body: desc, date: DateTime(date.year, date.month, date.day, hour.hour, hour.minute), channel: 'main_channel');
+  }
+
+  Task modifiedTask = Task(id: task.getID(), name: name, description: desc, category: cat, dateLimit: date, timeLimit: hour, score: score, user: user, repeat: repeat, notification: notification);
   modifiedTask.setCompleted(task.getCompleted());
 
-  if(task.repeat == repeat){ // repeat mode the same
+  if (task.repeat == repeat) {
+    // repeat mode the same
     modifiedTask.setNextRepeatedTaskSpawned(task.getNextRepeatedTaskSpawned());
-  }else{ // repeat mode changed! restore clone behaviour
+  } else {
+    // repeat mode changed! restore clone behaviour
     modifiedTask.setNextRepeatedTaskSpawned(false);
   }
   modifiedTask.setUserThatCompleted(task.getUserThatCompleted());
@@ -38,6 +54,8 @@ Future<void> modifyTask(Task task, String name, String desc, Category cat, DateT
   globals.tasks[index] = modifiedTask; // overwrite...
   debugPrint("Now tasks are: " + globals.tasks.toString());
   await globals.tasksStorage.saveTasksToFile(globals.tasks);
+  // Reload is needed so images are reloaded...
+  await globals.tasksStorage.loadTasksFromFile();
 }
 
 Future<void> deleteTaskByID(int id) async {
@@ -45,6 +63,7 @@ Future<void> deleteTaskByID(int id) async {
   int index = getIndexOfTaskByID(id);
   globals.tasks.removeAt(index);
   debugPrint("Now tasks are: " + globals.tasks.toString());
+  LocalNoticeService().cancelNotificationByID(id);
   await globals.tasksStorage.saveTasksToFile(globals.tasks);
 }
 
@@ -72,7 +91,9 @@ Future<Task> decodeSerializedTask(String encode) async {
   User? userThatCompleted = data[9] == "null" ? null : decodeSerializedUser(data[9]);
   String repeat = data[10];
   bool nextRepeatedSpawned = decodeBool(data[11]);
-  Task task = Task(id:id,name: name, description: desc, dateLimit: date, timeLimit: time, category: cat, score: score, user: user, repeat: repeat);
+  bool notification = decodeBool(data[12]);
+
+  Task task = Task(id: id, name: name, description: desc, dateLimit: date, timeLimit: time, category: cat, score: score, user: user, repeat: repeat, notification: notification);
   task.setCompleted(completed);
   task.setNextRepeatedTaskSpawned(nextRepeatedSpawned);
   task.setUserThatCompleted(userThatCompleted);
@@ -93,7 +114,9 @@ String serializeTask(Task task) {
   String encodedCompletedUser = task.getUserThatCompleted() == null ? "null" : serializeUser(task.getUserThatCompleted()!);
   String encodedRepeat = task.repeat;
   String encodedNextRepeatedSpawned = encodeBool(task.getNextRepeatedTaskSpawned());
-  String encoded = encodedID + sep + encodedName + sep + encodedDesc + sep + encodedDate + sep + encodedHour + sep + encodedCat + sep + encodedScore + sep + encodedUser + sep + encodeCompleted + sep + encodedCompletedUser + sep + encodedRepeat + sep + encodedNextRepeatedSpawned;
+  String encodedNotification = encodeBool(task.notification);
+
+  String encoded = encodedID + sep + encodedName + sep + encodedDesc + sep + encodedDate + sep + encodedHour + sep + encodedCat + sep + encodedScore + sep + encodedUser + sep + encodeCompleted + sep + encodedCompletedUser + sep + encodedRepeat + sep + encodedNextRepeatedSpawned + sep + encodedNotification;
   return encoded;
 }
 

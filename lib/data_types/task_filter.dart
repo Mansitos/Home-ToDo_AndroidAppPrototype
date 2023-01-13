@@ -15,19 +15,23 @@ class TaskFilter {
   DateTime? endDate; // if null -> endDate = endless
 
   List<Task> applyTo(List<Task> tasksToFilter, bool sort) {
-    debugPrint("\n------------ Task Filter Log ------------");
-    debugPrint(" > Input tasks count: " + tasksToFilter.length.toString());
-    debugPrint(" > Category: " + category.toString());
-    debugPrint(" > User: " + user.toString());
-    debugPrint(" > Date Interval: " + startingDate.toString() + " to " + endDate.toString());
+    if (globals.debugMode == true) {
+      debugPrint("\n------------ Task Filter Log ------------");
+      debugPrint(" > Input tasks count: " + tasksToFilter.length.toString());
+      debugPrint(" > Category: " + category.toString());
+      debugPrint(" > User: " + user.toString());
+      debugPrint(" > Date Interval: " + startingDate.toString() + " to " + endDate.toString());
+    }
 
     List<Task> filteredTasks = [];
     for (var i = 0; i <= tasksToFilter.length - 1; i++) {
       Task task = tasksToFilter[i]; // getting i-th task...
 
-      if (category != null) { // Filter by category...
+      if (category != null) {
+        // Filter by category...
         if (task.category.toString() == category.toString() || category.toString() == globals.categories[0].toString()) {
-          if (checkDateLimit(task, endDate, startingDate)) { // Filter by date/time...
+          if (checkDateLimit(task, endDate, startingDate)) {
+            // Filter by date/time...
             if (user!.name == globals.users[0].name || user!.name == task.user.name || task.user.name == globals.users[0].name) {
               filteredTasks.add(task);
             } else {
@@ -53,7 +57,6 @@ class TaskFilter {
     return filteredTasks;
   }
 
-
   List<Task> _sortByDate(List<Task> filteredTasks) {
     int taskDateComparison(Task a, Task b) {
       DateTime scoreA = a.dateLimit;
@@ -71,4 +74,3 @@ class TaskFilter {
     return filteredTasks;
   }
 }
-

@@ -184,7 +184,7 @@ class UserTileWidgetState extends State<UserTileWidget> {
 
   List<String> _getUserDeleteMessage() {
     List<String> deletionEmojis = ["❌"];
-    List<String> defaultDeleteMessage = [deletionEmojis[Random().nextInt(deletionEmojis.length)], " User deleted!"];
+    List<String> defaultDeleteMessage = [deletionEmojis[Random().nextInt(deletionEmojis.length)], " User Deleted!"];
     bool useDefaultMessage = Random().nextBool();
     List<List<String>> deletionMessages = [
       ["👽", "User kidnapped by aliens!"],

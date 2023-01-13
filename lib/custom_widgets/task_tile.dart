@@ -7,6 +7,8 @@ import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/utilities/task_utilities.dart' as tasks;
 import 'package:home_to_do/utilities/globals.dart' as globals;
 
+import '../utilities/generic_utilities.dart';
+
 class TaskTileWidget extends StatefulWidget {
   const TaskTileWidget({Key? key, required this.task, required this.onChange, required this.onTaskComplete}) : super(key: key);
 
@@ -41,7 +43,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
           style: TextButton.styleFrom(
             primary: Colors.black,
             backgroundColor: selected == false ? Colors.white : Colors.white,
-            padding: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? EdgeInsets.all(6) : EdgeInsets.all(1),
+            padding: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? EdgeInsets.only(left: 5, top: 4, bottom: 4, right: 5) : EdgeInsets.all(1),
           ),
           onLongPress: () {
             showMenu(
@@ -183,19 +185,17 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.task.category.emoji + " " + widget.task.name,
-                        style: selected == true ? TextStyle(fontSize: 17, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 17),
-                      ),
+                      _getTaskTileTitleWidget(),
                       Container(
-                        height: 5,
+                        height: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? 5 : 3,
                       ),
-                      Text(
-                        _hourToString(widget.task.timeLimit) + " - " + _dateToString(widget.task.dateLimit),
-                        style: selected == true ? TextStyle(fontSize: 12, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 12),
-                      ),
+                      _getNotificationsAndTimeWidget(),
                       Container(
-                        height: 3,
+                        height: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? 3 : 2,
+                      ),
+                      _getRepeatWidget(),
+                      Container(
+                        height: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? 3 : 2,
                       ),
                       _getTaskTileDescriptionTextWidget()
                     ],
@@ -208,16 +208,16 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(right: 5, left: 5),
+                      padding: const EdgeInsets.only(right: 5, left: 5, top: 1, bottom: 0),
                       child: Container(
                           padding: EdgeInsets.all(2),
                           decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle),
                           child: ClipOval(
                             child: SizedBox.fromSize(
-                              size: Size.fromRadius(18),
+                              size: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? Size.fromRadius(18) : Size.fromRadius(16),
                               child: widget.task.user.image == null
                                   ? Image.asset(
-                                      "lib/assets/user_images/default_users_img.png",
+                                      _getDefaultUserImage(widget.task.user),
                                       fit: BoxFit.cover,
                                     )
                                   : Image.file(
@@ -230,10 +230,13 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                     Container(
                       height: 2,
                     ),
-                    Text(
-                      _generateScoreWidgetText(),
-                      style: TextStyle(fontSize: 8),
-                      textAlign: TextAlign.center,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Text(
+                        _generateScoreWidgetText(),
+                        style: TextStyle(fontSize: 8),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ],
                 ),
@@ -274,7 +277,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
 
   List<String> _getTaskDeleteMessage() {
     List<String> deletionEmojis = ["💣", "🔥", "☠", "👍", "🧨", "💥", "❌", "☢", "☣"];
-    List<String> defaultDeleteMessage = [deletionEmojis[Random().nextInt(deletionEmojis.length)], "Task deleted!"];
+    List<String> defaultDeleteMessage = [deletionEmojis[Random().nextInt(deletionEmojis.length)], "Task Deleted!"];
     bool useDefaultMessage = Random().nextBool();
     List<List<String>> deletionMessages = [
       ["🔥", "Task burnt!"],
@@ -299,21 +302,80 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
     return text;
   }
 
-  String _dateToString(DateTime date) {
-    DateTime today = DateTime.now();
-    DateTime yesterday = today.subtract(Duration(days: 1));
-    DateTime tomorrow = today.add(Duration(days: 1));
-    if (date.year == today.year && date.month == today.month && date.day == today.day) {
-      // Today case
-      return "Today";
-    } else if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
-      // Yesterday case
-      return "Yesterday";
-    } else if (date.year == tomorrow.year && date.month == tomorrow.month && date.day == tomorrow.day) {
-      // Tomorrow case
-      return "Tomorrow";
+  Widget _getRepeatWidget() {
+    List<Widget> repeatWidget = [];
+
+    TextStyle style = selected == true ? TextStyle(fontSize: 12, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 12);
+
+    if (widget.task.repeat != "No") {
+      repeatWidget = [
+        Icon(
+          Icons.loop,
+          size: 14,
+          color: Colors.black87,
+        ),
+        Text(
+          _getWidgetRepatText() + " ",
+          style: style,
+        )
+      ];
+    }
+
+    return Row(children: repeatWidget);
+  }
+
+  _getNotificationsAndTimeWidget() {
+    List<Widget> notificationWidget = [];
+
+    if (widget.task.notification == true) {
+      notificationWidget = [
+        Icon(
+          Icons.notifications_none_sharp,
+          size: 14,
+          color: Colors.black87,
+        ),
+      ];
     } else {
-      return date.day.toString() + "/" + date.month.toString() + "/" + date.year.toString();
+      notificationWidget = [
+        Icon(
+          Icons.notifications_off_outlined,
+          size: 14,
+          color: Colors.black87,
+        ),
+      ];
+    }
+
+    return Row(
+        children: notificationWidget +
+            [
+              Text(
+                _hourToString(widget.task.timeLimit) + " - " + dateToString(widget.task.dateLimit),
+                style: selected == true ? TextStyle(fontSize: 12, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 12),
+              ),
+            ]);
+  }
+
+  Widget _getTaskTileTitleWidget() {
+    return Text(
+      widget.task.category.emoji + " " + widget.task.name,
+      style: selected == true ? TextStyle(fontSize: 17, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 17),
+    );
+  }
+
+  _getWidgetRepatText() {
+    String rep = widget.task.repeat;
+    if (rep != "No" && rep != "Every Day" && rep != "Every Week" && rep != "Every Month") {
+      return "Every " + rep + " Days";
+    } else {
+      return rep;
+    }
+  }
+
+  String _getDefaultUserImage(user) {
+    if (user.name == "All") {
+      return "lib/assets/user_images/default_users_img.png";
+    } else {
+      return "lib/assets/user_images/default_user_img.png";
     }
   }
 }

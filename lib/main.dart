@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/data_types/global_settings.dart';
@@ -7,6 +8,7 @@ import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/pages/users_page.dart';
 import 'package:home_to_do/pages/categories_page.dart';
 import 'package:home_to_do/utilities/generic_utilities.dart';
+import 'package:home_to_do/utilities/notification_api.dart';
 import 'package:home_to_do/utilities/task_utilities.dart';
 import 'package:path_provider/path_provider.dart';
 import 'custom_widgets/category_horizontal_list_view.dart';
@@ -28,16 +30,14 @@ Future<bool> initializeApplicationVariables() async {
   // Load global application variables
   await globals.globalSettingsStorage.loadGlobalSettingsFromFile();
 
-  // Load categories and tasks from file
+  // Load categories, tasks, users and rank_history from file
   await globals.categoriesStorage.loadCategoriesFromFile();
   await globals.tasksStorage.loadTasksFromFile();
   await globals.usersStorage.loadUsersFromFile();
+  await globals.rankHistoryStorage.loadRankHistoryFromFile();
 
-  // TODO: FOR DEBUG, remove
-  //await createNewTask("2old", "decription", globals.categories[0], DateTime.now().subtract(Duration(days: 2)), TimeOfDay(hour: 20, minute: 20), 4, globals.users[0], "No");
-  //await createNewTask("40old", "decription", globals.categories[0], DateTime.now().subtract(Duration(days: 40)), TimeOfDay(hour: 20, minute: 20), 4, globals.users[0], "No");
-  //await createNewTask("22old", "decription", globals.categories[0], DateTime.now().subtract(Duration(days: 22)), TimeOfDay(hour: 20, minute: 20), 3, globals.users[0], "No");
-  //await createNewTask("30old", "decription", globals.categories[0], DateTime.now().subtract(Duration(days: 30)), TimeOfDay(hour: 20, minute: 20), 2, globals.users[0], "No");
+  // Notifications init
+  await LocalNoticeService().setup();
 
   return true;
 }
@@ -118,11 +118,11 @@ class MainScreenState extends State<MainScreen> {
     });
   }
 
-  void completeTaskCallback(Task task) {
+  Future<void> completeTaskCallback(Task task) async {
     if (task.getCompleted() == false) {
-      task.completeTask(selectedUser!);
+      await task.completeTask(selectedUser!);
     } else {
-      task.undoComplete();
+      await task.undoComplete();
     }
     rebuildMainScreen(false, false);
   }
@@ -153,12 +153,15 @@ class MainScreenState extends State<MainScreen> {
           title: viewMode == "list"
               ? MainScreenTimeIntervalSelectionDropdown(
                   startingSelectedValue: selectedTimeOption,
-
                   viewMode: viewMode,
                   onChange: (List<DateTime?> val) {
                     if (val.isNotEmpty) {
                       selectedStartingDate = val[0];
-                      selectedEndDate = val[1];
+                      if (val.length > 1) {
+                        selectedEndDate = val[1];
+                      } else {
+                        selectedEndDate = val[0];
+                      }
                     }
                     debugPrint("> Changed time filter:" + selectedStartingDate.toString() + " to " + selectedEndDate.toString());
                     rebuildMainScreen(false, false);
@@ -167,7 +170,8 @@ class MainScreenState extends State<MainScreen> {
                     setState(() {
                       selectedTimeOption = val;
                     });
-                  }, startingCustomInterval: [selectedStartingDate,selectedEndDate],
+                  },
+                  startingCustomInterval: [selectedStartingDate, selectedEndDate],
                 )
               : _getCalendarViewActiveText([selectedStartingDate, selectedEndDate]),
           actions: <Widget>[
@@ -265,7 +269,9 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(height: 10),
+              Divider(
+                height: 4,
+              ),
               ListTile(
                 title: Row(
                   children: [
@@ -344,7 +350,9 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(height: 10),
+              Divider(
+                height: 4,
+              ),
               ListTile(
                 title: Row(
                   children: [
@@ -394,7 +402,9 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(height: 10),
+              Divider(
+                height: 4,
+              ),
               ListTile(
                 title: Row(
                   children: [
@@ -444,7 +454,9 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(height: 10),
+              Divider(
+                height: 4,
+              ),
               ListTile(
                 title: Row(
                   children: [
@@ -519,7 +531,9 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(height: 10),
+              Divider(
+                height: 4,
+              ),
               ListTile(
                 title: Row(
                   children: [
@@ -594,7 +608,9 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(height: 10),
+              Divider(
+                height: 4,
+              ),
               ListTile(
                 title: Row(
                   children: [
@@ -623,7 +639,7 @@ class MainScreenState extends State<MainScreen> {
                                 const Text("Show Expired Tasks"),
                               ],
                             ),
-                            content: const Text('This option enables/disables expired tasks visualization under filtered tasks.', textAlign: TextAlign.center),
+                            content: const Text('This option enables/disables expired tasks visualization under currently filtered tasks (only in list view).', textAlign: TextAlign.center),
                             actions: <Widget>[
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
@@ -669,7 +685,9 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(height: 10),
+              Divider(
+                height: 4,
+              ),
               ListTile(
                 title: Row(
                   children: [
@@ -698,7 +716,7 @@ class MainScreenState extends State<MainScreen> {
                                 const Text("Auto-Delete Old Tasks"),
                               ],
                             ),
-                            content: const Text('This option enables/disables expired tasks automatic deletion. Tasks will be deleted when at least 1 month old', textAlign: TextAlign.center),
+                            content: const Text('This option enables/disables expired tasks automatic deletion. Tasks will be deleted when at least 1 month old.', textAlign: TextAlign.center),
                             actions: <Widget>[
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
@@ -768,6 +786,7 @@ class MainScreenState extends State<MainScreen> {
     await globals.categoriesStorage.saveCategoriesToFile([]);
     await globals.tasksStorage.saveTasksToFile([]);
     await globals.usersStorage.saveUsersToFile([]);
+    await globals.rankHistoryStorage.saveRankHistoryToFile([]);
     GlobalSettings wipedSettings = GlobalSettings(lastUniqueGeneratedID: 0, popUpMessagesEnabled: true, compactTaskListViewEnabled: false, alwaysShowExpiredTasks: true, autoMonthOldDelete: true);
     await globals.globalSettingsStorage.saveGlobalSettingsToFile(wipedSettings);
 
@@ -777,6 +796,8 @@ class MainScreenState extends State<MainScreen> {
       await new Directory(directory.path + "/user_images/").delete(recursive: true);
     }
     await new Directory(directory.path + "/user_images/").create(recursive: true);
+
+    await LocalNoticeService().cancelAllNotifications();
 
     // Load wiped (re-generated-data) again...
     await initializeApplicationVariables();
@@ -789,11 +810,13 @@ class MainScreenState extends State<MainScreen> {
         child: Container(
             child: Text(
           "📝 Available tasks for " + selectedUser!.name + ":",
-          style: TextStyle(color: Colors.white, fontSize: 14),
+          style: TextStyle(color: Colors.white, fontSize: 15),
         )),
       );
     } else {
-      return Container();
+      return Container(
+        height: 0,
+      );
     }
   }
 
@@ -883,7 +906,6 @@ class MainScreenState extends State<MainScreen> {
 
   void calendarRangeSelectedCallback(List<DateTime?> dates) {
     selectedTimeOption = "Custom Interval";
-
   }
 }
 
@@ -922,8 +944,6 @@ class MainScreenAdditionalOptionsDropdown extends StatefulWidget {
 }
 
 class MainScreenTimeIntervalSelectionDropdown extends StatefulWidget {
-
-
   const MainScreenTimeIntervalSelectionDropdown({Key? key, required this.onChange, required this.viewMode, required this.startingSelectedValue, required this.startingCustomInterval, required this.onSelection}) : super(key: key);
 
   final DateTimeRangeCallback onChange;
@@ -1009,20 +1029,24 @@ Widget _tasksPageMainWidgetBuilder(context, void Function(bool restoreSelectedUs
   } else if (filteredTasks.isEmpty && (globals.alwaysShowExpiredTasks == true && expiredTasks.isNotEmpty)) {
     if (globals.activeViewMode == "list") {
       return ListView(
-        children: [_noTasksWidgetBuilder()] + expiredTasksWidgets,
+        children: [_noTasksWidgetBuilder(context)] + expiredTasksWidgets,
       );
     } else {
       return ListView(
-        children: [_noTasksWidgetBuilder()],
+        children: [_noTasksWidgetBuilder(context)],
       );
     }
   } else {
     return Column(
       children: [
-        Container(
-          height: MediaQuery.of(context).size.height * 0.175,
-        ),
-        _noTasksWidgetBuilder(),
+        globals.activeViewMode == "list"
+            ? Container(
+                height: MediaQuery.of(context).size.height * 0.175,
+              )
+            : Container(
+                height: 0,
+              ),
+        _noTasksWidgetBuilder(context),
       ],
     );
   }
@@ -1053,35 +1077,38 @@ List<Widget> _expiredTasksWidgetBuilder(context, void Function(bool restoreSelec
   }
 }
 
-Widget _noTasksWidgetBuilder() {
-  return Center(
-      child: Padding(
-    padding: const EdgeInsets.all(50),
-    child: SizedBox(
-      child: Column(
-        children: const [
-          Text("No tasks found!", style: TextStyle(fontSize: 24, color: Colors.white)),
-          Padding(
-            padding: EdgeInsets.all(12),
-            child: Center(
-              child: Text("🔍",
-                  style: TextStyle(
-                    fontSize: 70,
-                  )),
-            ),
+Widget _noTasksWidgetBuilder(context) {
+  return Container(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Padding(
+          padding: globals.activeViewMode == "list" ? EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.05) : EdgeInsets.all(0),
+          child: Text("No Tasks Found!", style: TextStyle(fontSize: 24, color: Colors.white)),
+        ),
+        Padding(
+          padding: EdgeInsets.all(10),
+          child: Center(
+            child: Text("🔍",
+                style: TextStyle(
+                  fontSize: 45, // !!! WARNING: if too big: BUG on RENDER
+                )),
           ),
-          Text(
-            "There are no tasks matching the currently selected filters! You can rest 😝",
+        ),
+        Padding(
+          padding: globals.activeViewMode != "list" ? EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.25) : EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.10),
+          child: Text(
+            "There are no tasks matching the currently\nselected filters! You can rest 💤",
             style: TextStyle(
               fontSize: 14,
               color: Colors.white,
             ),
             textAlign: TextAlign.center,
           ),
-        ],
-      ),
+        ),
+      ],
     ),
-  ));
+  );
 }
 
 class MainMenuBottomNavBarState extends State<MainMenuBottomNavBar> {
@@ -1137,7 +1164,7 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
     customInterval = widget.startingCustomInterval;
     dropdownValue = widget.startingSelectedValue;
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(7.0),
       child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
               value: dropdownValue,
@@ -1187,8 +1214,10 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
     DateTimeRange dateRange;
     if (customInterval.isEmpty) {
       dateRange = DateTimeRange(start: today, end: DateTime(today.year, today.month, today.day + 4));
-    } else {
+    } else if (customInterval.length == 2 && customInterval[1] != null) {
       dateRange = DateTimeRange(start: customInterval[0]!, end: customInterval[1]!);
+    } else {
+      dateRange = DateTimeRange(start: customInterval[0]!, end: customInterval[0]!);
     }
 
     var newDateRange = await showCalendarDatePicker2Dialog(
@@ -1219,31 +1248,31 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
       DropdownMenuItem(
           child: Text(
             "Today",
-            style: TextStyle(fontSize: 17),
+            style: TextStyle(fontSize: 18),
           ),
           value: "Today"),
       DropdownMenuItem(
           child: Text(
             "Tomorrow",
-            style: TextStyle(fontSize: 17),
+            style: TextStyle(fontSize: 18),
           ),
           value: "Tomorrow"),
       DropdownMenuItem(
           child: Text(
             "This Week",
-            style: TextStyle(fontSize: 17),
+            style: TextStyle(fontSize: 18),
           ),
           value: "This Week"),
       DropdownMenuItem(
           child: Text(
             "This Month",
-            style: TextStyle(fontSize: 17),
+            style: TextStyle(fontSize: 18),
           ),
           value: "This Month"),
       DropdownMenuItem(
           child: Text(
             "Expired",
-            style: TextStyle(fontSize: 17),
+            style: TextStyle(fontSize: 18),
           ),
           value: "Expired"),
     ];
@@ -1256,24 +1285,38 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
 }
 
 Widget _getCustomIntervalDropDownActiveText(String dropdownValue, List<DateTime?> customInterval) {
+  TextStyle style = TextStyle(fontSize: 18, fontWeight: FontWeight.w400);
+
   if (dropdownValue != "Custom Interval") {
-    return Text("Custom Interval", style: TextStyle(fontSize: 17));
+    return Text("Custom Interval", style: style);
   } else if (customInterval.length == 0) {
     return Text("Custom Interval");
-  } else if (monthToText(customInterval[0]!.month) == monthToText(customInterval[1]!.month) && customInterval[0]!.day.toString() == customInterval[1]!.day.toString()) {
-    return Text(monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(), style: TextStyle(fontSize: 17));
+  } else if (customInterval[1] == null || monthToText(customInterval[0]!.month) == monthToText(customInterval[1]!.month) && customInterval[0]!.day.toString() == customInterval[1]!.day.toString()) {
+    return Text(monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(), style: style);
   } else {
-    return Text(monthToText(customInterval[0]!.month) + " " + customInterval[0]!.day.toString() + " - " + monthToText(customInterval[1]!.month) + " " + customInterval[1]!.day.toString(), style: TextStyle(fontSize: 17));
+    return Text(monthToText(customInterval[0]!.month) + " " + customInterval[0]!.day.toString() + " - " + monthToText(customInterval[1]!.month) + " " + customInterval[1]!.day.toString(), style: style);
   }
 }
 
 Widget _getCalendarViewActiveText(List<DateTime?> customInterval) {
-  TextStyle style = TextStyle(fontSize: 20);
+  TextStyle style = TextStyle(fontSize: 18, fontWeight: FontWeight.w400);
   if (customInterval[1] == null) {
-    return Text(monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(), style: style);
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Text(
+        monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(),
+        style: style,
+      ),
+    );
   } else if (monthToText(customInterval[0]!.month) == monthToText(customInterval[1]!.month) && customInterval[0]!.day.toString() == customInterval[1]!.day.toString()) {
-    return Text(monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(), style: style);
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Text(monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(), style: style),
+    );
   } else {
-    return Text(monthToText(customInterval[0]!.month) + " " + customInterval[0]!.day.toString() + " - " + monthToText(customInterval[1]!.month) + " " + customInterval[1]!.day.toString(), style: style);
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Text(monthToText(customInterval[0]!.month) + " " + customInterval[0]!.day.toString() + " - " + monthToText(customInterval[1]!.month) + " " + customInterval[1]!.day.toString(), style: style),
+    );
   }
 }

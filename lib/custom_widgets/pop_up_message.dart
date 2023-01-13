@@ -29,7 +29,7 @@ void showPopUpMessage(BuildContext context, String topMessage, String message, i
                   Text(
                     topMessage,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 50),
+                    style: TextStyle(fontSize: 45),
                   ),
                   Container(height: 7),
                   Text(

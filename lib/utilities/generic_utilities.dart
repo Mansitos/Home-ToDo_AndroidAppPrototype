@@ -5,9 +5,9 @@ import '../data_types/task.dart';
 
 extension StringExtension on String {
   String capitalize() {
-    if(this.length > 0) {
+    if (this.length > 0) {
       return "${this[0].toUpperCase()}${this.substring(1).toLowerCase()}";
-    }else{
+    } else {
       return this;
     }
   }
@@ -82,6 +82,25 @@ bool decodeBool(String val) {
   }
 }
 
+extension TimeOfDayExtension on TimeOfDay {
+  // Ported from org.threeten.bp;
+  TimeOfDay plusMinutes(int minutes) {
+    if (minutes == 0) {
+      return this;
+    } else {
+      int mofd = this.hour * 60 + this.minute;
+      int newMofd = ((minutes % 1440) + mofd + 1440) % 1440;
+      if (mofd == newMofd) {
+        return this;
+      } else {
+        int newHour = newMofd ~/ 60;
+        int newMinute = newMofd % 60;
+        return TimeOfDay(hour: newHour, minute: newMinute);
+      }
+    }
+  }
+}
+
 bool checkDateLimit(Task task, DateTime? endDate, DateTime startingDate) {
   if (endDate == null) {
     // It's not a range check.
@@ -96,4 +115,26 @@ bool checkDateLimit(Task task, DateTime? endDate, DateTime startingDate) {
 
 bool areSameDay(DateTime first, DateTime second) {
   return (first.year == second.year && first.month == second.month && first.day == second.day);
+}
+
+String dateToString(DateTime date) {
+  DateTime today = DateTime.now();
+  DateTime yesterday = today.subtract(Duration(days: 1));
+  DateTime tomorrow = today.add(Duration(days: 1));
+
+  if(date.toString() == DateTime(0).toString()){
+    return "--";
+  }
+  if (date.year == today.year && date.month == today.month && date.day == today.day) {
+    // Today case
+    return "Today";
+  } else if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
+    // Yesterday case
+    return "Yesterday";
+  } else if (date.year == tomorrow.year && date.month == tomorrow.month && date.day == tomorrow.day) {
+    // Tomorrow case
+    return "Tomorrow";
+  } else {
+    return date.day.toString() + "/" + date.month.toString() + "/" + date.year.toString();
+  }
 }

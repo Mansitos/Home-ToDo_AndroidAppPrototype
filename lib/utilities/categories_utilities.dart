@@ -5,13 +5,14 @@ import 'package:home_to_do/data_types/task.dart';
 import 'package:home_to_do/utilities/generic_utilities.dart';
 import 'globals.dart' as globals;
 
-void createNewCategory(String name, String emoji) {
+Future<void> createNewCategory(String name, String emoji) async {
   name = name.capitalize();
 
   Category newCategory = Category(name: name, emoji: emoji);
   globals.categories.add(newCategory);
   debugPrint("\n > New category saved!\n" + serializeCategory(newCategory));
-  globals.categoriesStorage.saveCategoriesToFile(globals.categories);
+  await globals.categoriesStorage.saveCategoriesToFile(globals.categories);
+  await globals.categoriesStorage.loadCategoriesFromFile();
 }
 
 Future<void> modifyCategory(int index, String name, String emoji) async {
@@ -59,6 +60,8 @@ String serializeCategory(Category category) {
 }
 
 bool checkIfCategoryNameAvailable(String name, String emoji, String mask, bool maskMode) {
+  name = name.capitalize();
+
   for (var i = 0; i < globals.categories.length; i++) {
     if (maskMode == true) {
       if (name != mask && emoji != mask) {
