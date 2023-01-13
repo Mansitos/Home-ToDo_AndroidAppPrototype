@@ -8,7 +8,7 @@ Università degli Studi di Udine - Italy
 ---
 
 ## Short app description
-Home To-Do is an android "Task-Management" app developed in flutter sdk. The App lets you schedule your tasks, setup push notifications and organize them into categories. You can also create multiple users and assign tasks to them! Every task does also have a score which will be assigned to the user that completes the task. This kind of "game inside the app" (gamification) attempts to make using the app and completing household tasks fun and more stimulating.
+Home To-Do is an android "Task-Management" app developed in flutter sdk. The App lets you schedule your tasks, setup push notifications and organize them into categories. You can also create multiple users and assign tasks to them! Each task also has a score that will be assigned to the user who completes the activity. This kind of "game inside the app" (gamification) attempts to make using the app and completing household tasks fun and more stimulating.
 
 ---
 
