@@ -3,6 +3,8 @@
 
 This application was developed for the university exam "Sviluppo di Applicazioni Mobili/Mobile Apps Development".
 
+This is my first mobile application ever built. My first project in Dart+Flutter SDK.
+
 Università degli Studi di Udine - Italy
 
 ---
@@ -17,8 +19,12 @@ Home To-Do is an android "Task-Management" app developed in flutter sdk. The App
 - Source-code
 - Lot of bugs and messy code 🙂 a strong refactoring phase is needed
 - If you want to use the code, please contact me first
+- A PDF Report "Relazione Progetto" (description of the design phase) in Italian language (for the exam)
 
 ---
+
+## Future development ?!?
+This is my first mobile application development project! I really liked the Flutter SDK so I'm thinking about continuing to work on this app. I would like to build and publish my personal to-do app (as if there weren't enough on the market 😂) that fully reflects my tastes and my needs... who knows! If you are reading this and there is a new branch on this project, then I have decided to continue!
 
 ## Screenshots:
 ![](Images.png)
