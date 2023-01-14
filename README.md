@@ -16,10 +16,11 @@ Home To-Do is an android "Task-Management" app developed in flutter sdk. The App
 
 ## What you can find in the repository
 - APK of the last build (inside release folder)
-- Source-code
-- Lot of bugs and messy code 🙂 a strong refactoring phase is needed
-- If you want to use the code, please contact me first
+- Source-code (android-studio project)
+- Lots of bugs and messy code 🙂 a strong refactoring phase is needed; some features are rushed
 - A PDF Report "Relazione Progetto" (description of the design phase) in Italian language (for the exam)
+
+If you want to use the code, please contact me first.
 
 ---
 
