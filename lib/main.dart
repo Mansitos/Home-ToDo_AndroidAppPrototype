@@ -62,7 +62,7 @@ class MyApp extends StatelessWidget {
                   secondary: Colors.amber,
                   onSurface: Colors.white,
                 ),
-                textSelectionTheme: TextSelectionThemeData(
+                textSelectionTheme: const TextSelectionThemeData(
                   selectionHandleColor: Colors.amber,
                 ),
               ),
@@ -204,7 +204,7 @@ class MainScreenState extends State<MainScreen> {
               DrawerHeader(
                 child: Column(
                   children: [
-                    Text(
+                    const Text(
                       'Home To-Do',
                       style: TextStyle(fontSize: 35),
                     ),
@@ -223,7 +223,7 @@ class MainScreenState extends State<MainScreen> {
               ListTile(
                 title: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.info_rounded,
                       color: Colors.black,
                     ),
@@ -269,13 +269,13 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(
+              const Divider(
                 height: 4,
               ),
               ListTile(
                 title: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.local_fire_department,
                       color: Colors.red,
                     ),
@@ -292,19 +292,19 @@ class MainScreenState extends State<MainScreen> {
                           return AlertDialog(
                             title: Column(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.warning,
                                   color: Colors.red,
                                   size: 80,
                                 ),
-                                Text(
+                                const Text(
                                   "Are you sure you want to wipe all data?",
                                   style: TextStyle(
                                     color: Colors.red,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                Text(
+                                const Text(
                                   "You can't undo this operation!",
                                   style: TextStyle(color: Colors.red),
                                   textAlign: TextAlign.center,
@@ -350,13 +350,13 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(
+              const Divider(
                 height: 4,
               ),
               ListTile(
                 title: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.star,
                       color: Colors.amber,
                     ),
@@ -402,13 +402,13 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(
+              const Divider(
                 height: 4,
               ),
               ListTile(
                 title: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.app_settings_alt,
                       color: Colors.black,
                     ),
@@ -454,18 +454,18 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(
+              const Divider(
                 height: 4,
               ),
               ListTile(
                 title: Row(
                   children: [
                     globals.popUpMessagesEnabled
-                        ? Icon(
+                        ? const Icon(
                             Icons.check_circle,
                             color: Colors.green,
                           )
-                        : Icon(
+                        : const Icon(
                             Icons.cancel,
                             color: Colors.red,
                           ),
@@ -503,7 +503,7 @@ class MainScreenState extends State<MainScreen> {
                                       },
                                       child: Text(
                                         globals.popUpMessagesEnabled ? "Disable" : "Keep disabled",
-                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                        style: const TextStyle(fontSize: 19, color: Colors.black),
                                       ),
                                       style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
                                     ),
@@ -518,7 +518,7 @@ class MainScreenState extends State<MainScreen> {
                                       },
                                       child: Text(
                                         globals.popUpMessagesEnabled ? "Keep enabled" : "Enable",
-                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                        style: const TextStyle(fontSize: 19, color: Colors.black),
                                       ),
                                       style: TextButton.styleFrom(backgroundColor: Colors.amber),
                                     ),
@@ -531,18 +531,18 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(
+              const Divider(
                 height: 4,
               ),
               ListTile(
                 title: Row(
                   children: [
                     globals.compactTaskListViewEnabled
-                        ? Icon(
+                        ? const Icon(
                             Icons.check_circle,
                             color: Colors.green,
                           )
-                        : Icon(
+                        : const Icon(
                             Icons.cancel,
                             color: Colors.red,
                           ),
@@ -580,7 +580,7 @@ class MainScreenState extends State<MainScreen> {
                                       },
                                       child: Text(
                                         globals.compactTaskListViewEnabled ? "Disable" : "Keep disabled",
-                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                        style: const TextStyle(fontSize: 19, color: Colors.black),
                                       ),
                                       style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
                                     ),
@@ -595,7 +595,7 @@ class MainScreenState extends State<MainScreen> {
                                       },
                                       child: Text(
                                         globals.compactTaskListViewEnabled ? "Keep enabled" : "Enable",
-                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                        style: const TextStyle(fontSize: 19, color: Colors.black),
                                       ),
                                       style: TextButton.styleFrom(backgroundColor: Colors.amber),
                                     ),
@@ -608,18 +608,18 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(
+              const Divider(
                 height: 4,
               ),
               ListTile(
                 title: Row(
                   children: [
                     globals.alwaysShowExpiredTasks
-                        ? Icon(
+                        ? const Icon(
                             Icons.check_circle,
                             color: Colors.green,
                           )
-                        : Icon(
+                        : const Icon(
                             Icons.cancel,
                             color: Colors.red,
                           ),
@@ -657,7 +657,7 @@ class MainScreenState extends State<MainScreen> {
                                       },
                                       child: Text(
                                         globals.alwaysShowExpiredTasks ? "Disable" : "Keep disabled",
-                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                        style: const TextStyle(fontSize: 19, color: Colors.black),
                                       ),
                                       style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
                                     ),
@@ -672,7 +672,7 @@ class MainScreenState extends State<MainScreen> {
                                       },
                                       child: Text(
                                         globals.alwaysShowExpiredTasks ? "Keep enabled" : "Enable",
-                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                        style: const TextStyle(fontSize: 19, color: Colors.black),
                                       ),
                                       style: TextButton.styleFrom(backgroundColor: Colors.amber),
                                     ),
@@ -685,18 +685,18 @@ class MainScreenState extends State<MainScreen> {
                   });
                 },
               ),
-              Divider(
+              const Divider(
                 height: 4,
               ),
               ListTile(
                 title: Row(
                   children: [
                     globals.autoMonthOldDelete
-                        ? Icon(
+                        ? const Icon(
                             Icons.check_circle,
                             color: Colors.green,
                           )
-                        : Icon(
+                        : const Icon(
                             Icons.cancel,
                             color: Colors.red,
                           ),
@@ -734,7 +734,7 @@ class MainScreenState extends State<MainScreen> {
                                       },
                                       child: Text(
                                         globals.autoMonthOldDelete ? "Disable" : "Keep disabled",
-                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                        style: const TextStyle(fontSize: 19, color: Colors.black),
                                       ),
                                       style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
                                     ),
@@ -749,7 +749,7 @@ class MainScreenState extends State<MainScreen> {
                                       },
                                       child: Text(
                                         globals.autoMonthOldDelete ? "Keep enabled" : "Enable",
-                                        style: TextStyle(fontSize: 19, color: Colors.black),
+                                        style: const TextStyle(fontSize: 19, color: Colors.black),
                                       ),
                                       style: TextButton.styleFrom(backgroundColor: Colors.amber),
                                     ),
@@ -810,7 +810,7 @@ class MainScreenState extends State<MainScreen> {
         child: Container(
             child: Text(
           "📝 Available tasks for " + selectedUser!.name + ":",
-          style: TextStyle(color: Colors.white, fontSize: 15),
+          style: const TextStyle(color: Colors.white, fontSize: 15),
         )),
       );
     } else {
@@ -868,12 +868,12 @@ class MainScreenState extends State<MainScreen> {
             config: CalendarDatePicker2Config(
               calendarType: CalendarDatePicker2Type.range,
               selectedDayHighlightColor: Colors.amber,
-              dayTextStyle: TextStyle(color: Colors.white),
-              selectedDayTextStyle: TextStyle(color: Colors.black),
-              controlsTextStyle: TextStyle(color: Colors.white, fontSize: 17),
-              weekdayLabelTextStyle: TextStyle(color: Colors.white, fontSize: 17),
-              todayTextStyle: TextStyle(color: Colors.amber),
-              yearTextStyle: TextStyle(color: Colors.white),
+              dayTextStyle: const TextStyle(color: Colors.white),
+              selectedDayTextStyle: const TextStyle(color: Colors.black),
+              controlsTextStyle: const TextStyle(color: Colors.white, fontSize: 17),
+              weekdayLabelTextStyle: const TextStyle(color: Colors.white, fontSize: 17),
+              todayTextStyle: const TextStyle(color: Colors.amber),
+              yearTextStyle: const TextStyle(color: Colors.white),
               disableYearPicker: true,
             ),
             onValueChanged: (dates) {
@@ -979,8 +979,8 @@ class MainScreenAdditionalOptionsDropdownState extends State<MainScreenAdditiona
           setState(() {
             selectedValue = value;
             if (value == 1) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => CategoriesScreen())).then((_) => setState(() {
-                    widget.rebuildMainScreenCallback(false, false); // TODO: check if needed
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const CategoriesScreen())).then((_) => setState(() {
+                    widget.rebuildMainScreenCallback(false, false);
                   }));
             }
             if (value == 2) {
@@ -1060,7 +1060,7 @@ List<Widget> _expiredTasksWidgetBuilder(context, void Function(bool restoreSelec
         Container(height: 20),
         Container(height: 2, color: Colors.amber),
         Container(height: 10),
-        Text(
+        const Text(
           "🕟 Expired Tasks:",
           style: TextStyle(fontSize: 15, color: Colors.white),
           textAlign: TextAlign.center,
@@ -1083,10 +1083,10 @@ Widget _noTasksWidgetBuilder(context) {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Padding(
-          padding: globals.activeViewMode == "list" ? EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.05) : EdgeInsets.all(0),
-          child: Text("No Tasks Found!", style: TextStyle(fontSize: 24, color: Colors.white)),
+          padding: globals.activeViewMode == "list" ? EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.05) : const EdgeInsets.all(0),
+          child: const Text("No Tasks Found!", style: TextStyle(fontSize: 24, color: Colors.white)),
         ),
-        Padding(
+        const Padding(
           padding: EdgeInsets.all(10),
           child: Center(
             child: Text("🔍",
@@ -1097,7 +1097,7 @@ Widget _noTasksWidgetBuilder(context) {
         ),
         Padding(
           padding: globals.activeViewMode != "list" ? EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.25) : EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.10),
-          child: Text(
+          child: const Text(
             "There are no tasks matching the currently\nselected filters! You can rest 💤",
             style: TextStyle(
               fontSize: 14,
@@ -1201,7 +1201,7 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
       case "This Month":
         return [today, DateTime(today.year, today.month + 1, today.day)];
       case "Expired":
-        return [DateTime(0), DateTime.now().subtract(Duration(days: 1))];
+        return [DateTime(0), DateTime.now().subtract(const Duration(days: 1))];
       case "Custom Interval":
         return await _dateTimeRangeSelection();
       default:
@@ -1225,11 +1225,11 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
       config: CalendarDatePicker2WithActionButtonsConfig(
         calendarType: CalendarDatePicker2Type.range,
         selectedDayHighlightColor: Colors.amber,
-        dayTextStyle: TextStyle(color: Colors.black),
-        selectedDayTextStyle: TextStyle(color: Colors.white),
-        controlsTextStyle: TextStyle(color: Colors.black, fontSize: 17),
-        weekdayLabelTextStyle: TextStyle(color: Colors.black, fontSize: 17),
-        todayTextStyle: TextStyle(color: Colors.amber),
+        dayTextStyle: const TextStyle(color: Colors.black),
+        selectedDayTextStyle: const TextStyle(color: Colors.white),
+        controlsTextStyle: const TextStyle(color: Colors.black, fontSize: 17),
+        weekdayLabelTextStyle: const TextStyle(color: Colors.black, fontSize: 17),
+        todayTextStyle: const TextStyle(color: Colors.amber),
       ),
       dialogSize: const Size(325, 400),
       initialValue: [],
@@ -1245,31 +1245,31 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
 
   List<DropdownMenuItem<String>> selectedMainScreenTimeIntervalSelectionDropdownItems(String viewMode) {
     List<DropdownMenuItem<String>> items = [
-      DropdownMenuItem(
+      const DropdownMenuItem(
           child: Text(
             "Today",
             style: TextStyle(fontSize: 18),
           ),
           value: "Today"),
-      DropdownMenuItem(
+      const DropdownMenuItem(
           child: Text(
             "Tomorrow",
             style: TextStyle(fontSize: 18),
           ),
           value: "Tomorrow"),
-      DropdownMenuItem(
+      const DropdownMenuItem(
           child: Text(
             "This Week",
             style: TextStyle(fontSize: 18),
           ),
           value: "This Week"),
-      DropdownMenuItem(
+      const DropdownMenuItem(
           child: Text(
             "This Month",
             style: TextStyle(fontSize: 18),
           ),
           value: "This Month"),
-      DropdownMenuItem(
+      const DropdownMenuItem(
           child: Text(
             "Expired",
             style: TextStyle(fontSize: 18),
@@ -1285,12 +1285,12 @@ class MainScreenTimeIntervalSelectionDropdownState extends State<MainScreenTimeI
 }
 
 Widget _getCustomIntervalDropDownActiveText(String dropdownValue, List<DateTime?> customInterval) {
-  TextStyle style = TextStyle(fontSize: 18, fontWeight: FontWeight.w400);
+  TextStyle style = const TextStyle(fontSize: 18, fontWeight: FontWeight.w400);
 
   if (dropdownValue != "Custom Interval") {
     return Text("Custom Interval", style: style);
   } else if (customInterval.length == 0) {
-    return Text("Custom Interval");
+    return const Text("Custom Interval");
   } else if (customInterval[1] == null || monthToText(customInterval[0]!.month) == monthToText(customInterval[1]!.month) && customInterval[0]!.day.toString() == customInterval[1]!.day.toString()) {
     return Text(monthToText(customInterval[0]!.month, extendedMode: true) + " " + customInterval[0]!.day.toString(), style: style);
   } else {
@@ -1299,7 +1299,7 @@ Widget _getCustomIntervalDropDownActiveText(String dropdownValue, List<DateTime?
 }
 
 Widget _getCalendarViewActiveText(List<DateTime?> customInterval) {
-  TextStyle style = TextStyle(fontSize: 18, fontWeight: FontWeight.w400);
+  TextStyle style = const TextStyle(fontSize: 18, fontWeight: FontWeight.w400);
   if (customInterval[1] == null) {
     return Padding(
       padding: const EdgeInsets.all(8.0),

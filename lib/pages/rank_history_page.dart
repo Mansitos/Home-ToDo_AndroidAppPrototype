@@ -23,7 +23,7 @@ class RankHistoryScreenState extends State<RankHistoryScreen> {
       drawerEnableOpenDragGesture: false,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        title: Text("Users Ranking History"),
+        title: const Text("Users Ranking History"),
         actions: const <Widget>[],
       ),
       body: globals.rankHistoryEntries.length > 1
@@ -38,8 +38,8 @@ class RankHistoryScreenState extends State<RankHistoryScreen> {
   List<Widget> rankHistoryTilesBuilder(BuildContext context) {
     List<Widget> rankHistoryTiles = [];
 
-    TextStyle titleStyle = TextStyle(fontSize: 16);
-    TextStyle secondStyle = TextStyle(fontSize: 13);
+    TextStyle titleStyle = const TextStyle(fontSize: 16);
+    TextStyle secondStyle = const TextStyle(fontSize: 13);
 
     // i = 1 because skip the first one (the default for starting point one)
     for (var i = 1; i < globals.rankHistoryEntries.length; i++) {
@@ -48,7 +48,7 @@ class RankHistoryScreenState extends State<RankHistoryScreen> {
       Widget rankHistoryTile = Padding(
         padding: const EdgeInsets.only(top: 4, bottom: 4, left: 8, right: 8),
         child: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(10.0)),
             color: Colors.white,
           ),
@@ -61,7 +61,7 @@ class RankHistoryScreenState extends State<RankHistoryScreen> {
                   style: titleStyle,
                 ),
               ),
-              Divider(
+              const Divider(
                 height: 0.5,
                 color: Colors.black54,
                 thickness: 1,

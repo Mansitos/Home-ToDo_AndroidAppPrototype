@@ -7,6 +7,8 @@ import 'package:image_crop/image_crop.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 
+// User modify-create dialog form
+
 class UserDialogForm extends StatefulWidget {
   const UserDialogForm({Key? key, required this.modifyMode, required this.userToModify, required this.onChange}) : super(key: key);
 
@@ -80,7 +82,7 @@ class UserDialogFormState extends State<UserDialogForm> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 MaterialButton(
-                  child: Container(padding: EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle), child: ClipOval(child: SizedBox.fromSize(size: Size.fromRadius(60), child: _displayUserImage()))),
+                  child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle), child: ClipOval(child: SizedBox.fromSize(size: const Size.fromRadius(60), child: _displayUserImage()))),
                   onPressed: () {
                     // Navigator.pop close the pop-up while showing the dialog.
                     // We have to wait till the animations finish, and then open the dialog.
@@ -90,7 +92,7 @@ class UserDialogFormState extends State<UserDialogForm> {
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: Text("📷 Select User Picture"),
+                                title: const Text("📷 Select User Picture"),
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -102,8 +104,8 @@ class UserDialogFormState extends State<UserDialogForm> {
                                       value: 0,
                                       child: Row(
                                         children: <Widget>[
-                                          Icon(Icons.folder),
-                                          Text(" Pick image from gallery"),
+                                          const Icon(Icons.folder),
+                                          const Text(" Pick image from gallery"),
                                         ],
                                       ),
                                     ),
@@ -129,14 +131,14 @@ class UserDialogFormState extends State<UserDialogForm> {
                   },
                 ),
                 Container(height: 4,),
-                Text("Tap to change picture!", style: TextStyle(color: Colors.black54, fontSize: 10),),
+                const Text("Tap to change picture!", style: TextStyle(color: Colors.black54, fontSize: 10),),
                 Theme(
                   data: Theme.of(context).copyWith(
-                      textSelectionTheme: TextSelectionThemeData(
+                      textSelectionTheme: const TextSelectionThemeData(
                           selectionColor: Colors.amber)),
                   child: TextFormField(
                     cursorColor: Colors.amber,
-                    style: TextStyle(fontSize: 18),
+                    style: const TextStyle(fontSize: 18),
                     maxLength: globals.userMaxLen,
                     initialValue: (() {
                       if (widget.modifyMode == true) {

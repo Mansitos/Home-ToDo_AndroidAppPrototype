@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:home_to_do/pages/task_page.dart';
-import 'package:home_to_do/utilities/categories_utilities.dart';
-import 'package:home_to_do/utilities/globals.dart' as globals;
+
+// Score selection ⭐⭐⭐⭐⭐ widget (for new_task_form)
 
 class ScoreSelection extends StatefulWidget {
   const ScoreSelection({Key? key, required this.formKey, required this.onChange, required this.startingScore}) : super(key: key);

@@ -44,6 +44,14 @@ String monthToText(int month, {bool extendedMode = false}) {
   }
 }
 
+String hourToString(TimeOfDay selectedHour) {
+  if (selectedHour.minute >= 10) {
+    return selectedHour.hour.toString() + ":" + selectedHour.minute.toString();
+  } else {
+    return selectedHour.hour.toString() + ":0" + selectedHour.minute.toString();
+  }
+}
+
 String encodeDate(DateTime date) {
   return date.toString();
 }
@@ -122,7 +130,7 @@ String dateToString(DateTime date) {
   DateTime yesterday = today.subtract(Duration(days: 1));
   DateTime tomorrow = today.add(Duration(days: 1));
 
-  if(date.toString() == DateTime(0).toString()){
+  if (date.toString() == DateTime(0).toString()) {
     return "--";
   }
   if (date.year == today.year && date.month == today.month && date.day == today.day) {

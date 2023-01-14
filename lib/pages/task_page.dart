@@ -131,7 +131,6 @@ class TaskScreenState extends State<TaskScreen> {
             // ok case!
           }
         }
-        //TODO: add validation?
         debugPrint(selectedHour.toString() + " selected!");
       }
     });

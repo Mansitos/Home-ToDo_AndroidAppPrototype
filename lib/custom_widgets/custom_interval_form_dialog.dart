@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/custom_widgets/score_selection_widget.dart';
-import 'package:home_to_do/utilities/categories_utilities.dart';
-import 'package:home_to_do/utilities/generic_utilities.dart';
-import 'package:home_to_do/utilities/globals.dart' as globals;
+
+// Custom n days repeat interval selection widget form
 
 class CustomIntervalDialogForm extends StatefulWidget {
   CustomIntervalDialogForm({Key? key, required this.startingDaysInterval, required this.onSelect}) : super(key: key);

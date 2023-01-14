@@ -7,7 +7,7 @@ import 'package:home_to_do/utilities/task_utilities.dart' as tasks;
 class Task {
   Task({required this.id, required this.name, required this.description, required this.dateLimit, required this.timeLimit, required this.category, required this.score, required this.user, required this.repeat, required this.notification});
 
-  final int id; //TODO: final....?
+  final int id;
   String name;
   String description;
   DateTime dateLimit;

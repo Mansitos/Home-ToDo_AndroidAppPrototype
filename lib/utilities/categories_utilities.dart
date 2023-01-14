@@ -24,20 +24,20 @@ Future<void> modifyCategory(int index, String name, String emoji) async {
   globals.categories[index] = modified;
   debugPrint("Now categories are: " + globals.categories.toString());
   globals.categoriesStorage.saveCategoriesToFile(globals.categories);
-  _updateTaskWithMatchingCategory(oldCategory,modified);
+  _updateTaskWithMatchingCategory(oldCategory, modified);
 }
 
 void _updateTaskWithMatchingCategory(Category oldCategory, Category newCategory) {
   List<Task> tasks = globals.tasks;
   int count = 0;
-  for(int i = 0;i<=tasks.length-1;i++){
+  for (int i = 0; i <= tasks.length - 1; i++) {
     Task task = tasks[i];
-    if(task.category.toString() == oldCategory.toString()){
+    if (task.category.toString() == oldCategory.toString()) {
       count++;
       task.category = newCategory;
     }
   }
-  debugPrint(" > "+count.toString()+ " tasks modified due to category modify process.");
+  debugPrint(" > " + count.toString() + " tasks modified due to category modify process.");
 }
 
 Future<void> deleteCategory(int index) async {
@@ -46,12 +46,12 @@ Future<void> deleteCategory(int index) async {
   globals.categories.removeAt(index);
   debugPrint("Now categories are: " + globals.categories.toString());
   globals.categoriesStorage.saveCategoriesToFile(globals.categories);
-  _updateTaskWithMatchingCategory(oldCategory,globals.categories[0]);
+  _updateTaskWithMatchingCategory(oldCategory, globals.categories[0]);
 }
 
 Category decodeSerializedCategory(String encode) {
   String emoji = encode.substring(0, 2);
-  String name  = encode.substring(3);
+  String name = encode.substring(3);
   return Category(name: name, emoji: emoji);
 }
 

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
-import 'package:home_to_do/utilities/generic_utilities.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
+
+// Category Create-Modify Widget Form
 
 class CategoryDialogForm extends StatefulWidget {
   const CategoryDialogForm({Key? key, required this.modifyMode, required this.modifyIndex}) : super(key: key);
@@ -16,6 +17,7 @@ class CategoryDialogForm extends StatefulWidget {
 
 class CategoryDialogFormState extends State<CategoryDialogForm> {
   final _formKey = GlobalKey<FormState>();
+
   String categoryEmoji = "";
   String categoryName = "";
 
@@ -39,9 +41,7 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
           child: SizedBox(
             height: 250,
             child: Theme(
-              data: Theme.of(context).copyWith(
-                  textSelectionTheme: TextSelectionThemeData(
-                      selectionColor: Colors.amber)),
+              data: Theme.of(context).copyWith(textSelectionTheme: const TextSelectionThemeData(selectionColor: Colors.amber)),
               child: Column(
                 children: [
                   TextFormField(
@@ -76,10 +76,9 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                         return 'Only emoji are allowed!';
                       } else if (!checkIfCategoryNameAvailable("", value, oldCategoryEmoji, widget.modifyMode)) {
                         return 'Emoji already used!';
-                      } else if(value.length > 3){
+                      } else if (value.length > 3) {
                         return 'This Emoji is not compatible';
-                      }
-                      else {
+                      } else {
                         categoryEmoji = value;
                         return null;
                       }
@@ -87,7 +86,7 @@ class CategoryDialogFormState extends State<CategoryDialogForm> {
                   ),
                   TextFormField(
                     cursorColor: Colors.amber,
-                    style: TextStyle(fontSize: 18),
+                    style: const TextStyle(fontSize: 18),
                     maxLength: 20,
                     initialValue: (() {
                       if (widget.modifyMode == true) {

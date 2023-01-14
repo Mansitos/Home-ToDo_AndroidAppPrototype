@@ -3,6 +3,8 @@ import 'package:home_to_do/data_types/category.dart';
 import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/utilities/categories_utilities.dart';
 
+// Horizontal categories-list widget selector
+
 class CategoryHorizontalListView extends StatefulWidget {
   const CategoryHorizontalListView({Key? key, required this.categories, required this.onChange}) : super(key: key);
 
@@ -20,13 +22,12 @@ class CategoryHorizontalListViewState extends State<CategoryHorizontalListView> 
 
   @override
   Widget build(BuildContext context) {
-
     return ListView.builder(
       shrinkWrap: false,
       scrollDirection: Axis.horizontal,
       itemCount: widget.categories.length,
       itemBuilder: (BuildContext context, int index) => Padding(
-        padding: EdgeInsets.all(7),
+        padding: const EdgeInsets.all(7),
         child: getCategoryButton(index),
       ),
     );

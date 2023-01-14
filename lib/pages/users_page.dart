@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/user_form_dialog.dart';
 import 'package:home_to_do/custom_widgets/user_tile.dart';
-import 'package:home_to_do/data_types/rank_history_entry.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/pages/rank_history_page.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 import 'package:home_to_do/utilities/rank_history_utilities.dart';
-import 'package:home_to_do/utilities/users_utilities.dart';
 
 import '../custom_widgets/pop_up_message.dart';
 import '../utilities/generic_utilities.dart';
@@ -30,7 +28,7 @@ class UserScreenState extends State<UserScreen> {
         drawerEnableOpenDragGesture: false,
         appBar: AppBar(
           automaticallyImplyLeading: true,
-          title: Text("Users"),
+          title: const Text("Users"),
           actions: const <Widget>[
             AdditionalOptionsPopUpMenu(),
           ],
@@ -63,7 +61,7 @@ class UserScreenState extends State<UserScreen> {
           children: [
             PodiumWidget(usersList: _getUsersOrderedList()),
             _getRankHistoryIntervalText(),
-            Divider(
+            const Divider(
               height: 20,
               color: Colors.white,
             ),
@@ -81,7 +79,7 @@ class UserScreenState extends State<UserScreen> {
     }
     return Text(
       "From: " + dateToString(start),
-      style: TextStyle(color: Colors.white, fontSize: 15),
+      style: const TextStyle(color: Colors.white, fontSize: 15),
     );
   }
 }
@@ -205,7 +203,7 @@ class PodiumWidgetState extends State<PodiumWidget> {
         Container(
           height: screenHeight * 0.035,
         ),
-        Text(
+        const Text(
           "🎖️ Users Ranking 🎖️",
           style: TextStyle(fontSize: 26, color: Colors.white),
         ),
@@ -222,12 +220,12 @@ class PodiumWidgetState extends State<PodiumWidget> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Container(
-                        padding: widget.usersList.length >= 2 ? EdgeInsets.all(2) : null,
-                        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                        padding: widget.usersList.length >= 2 ? const EdgeInsets.all(2) : null,
+                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                         child: widget.usersList.length >= 2
                             ? ClipOval(
                                 child: SizedBox.fromSize(
-                                  size: Size.fromRadius(20),
+                                  size: const Size.fromRadius(20),
                                   child: widget.usersList[1].image == null
                                       ? Image.asset(
                                           "lib/assets/user_images/default_user_img.png",
@@ -247,7 +245,7 @@ class PodiumWidgetState extends State<PodiumWidget> {
                       padding: const EdgeInsets.all(3.0),
                       child: Text(
                         widget.usersList.length >= 2 ? widget.usersList[1].name : "",
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 15,
                         ),
@@ -258,7 +256,7 @@ class PodiumWidgetState extends State<PodiumWidget> {
                       height: screenHeight * 0.005,
                     ),
                     Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadiusDirectional.only(
                             topStart: Radius.circular(10),
@@ -270,7 +268,7 @@ class PodiumWidgetState extends State<PodiumWidget> {
                           Container(
                             height: screenHeight * 0.01,
                           ),
-                          Text(
+                          const Text(
                             "2°",
                             style: TextStyle(color: Colors.black, fontSize: 30),
                           ),
@@ -285,12 +283,12 @@ class PodiumWidgetState extends State<PodiumWidget> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Container(
-                        padding: widget.usersList.length >= 1 ? EdgeInsets.all(2) : null,
-                        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                        padding: widget.usersList.length >= 1 ? const EdgeInsets.all(2) : null,
+                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                         child: widget.usersList.length >= 1
                             ? ClipOval(
                                 child: SizedBox.fromSize(
-                                  size: Size.fromRadius(20),
+                                  size: const Size.fromRadius(20),
                                   child: widget.usersList[0].image == null
                                       ? Image.asset(
                                           "lib/assets/user_images/default_user_img.png",
@@ -310,7 +308,7 @@ class PodiumWidgetState extends State<PodiumWidget> {
                       padding: const EdgeInsets.all(3.0),
                       child: Text(
                         widget.usersList.length >= 1 ? widget.usersList[0].name : "",
-                        style: TextStyle(color: Colors.white, fontSize: 15),
+                        style: const TextStyle(color: Colors.white, fontSize: 15),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -318,7 +316,7 @@ class PodiumWidgetState extends State<PodiumWidget> {
                       height: screenHeight * 0.005,
                     ),
                     Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadiusDirectional.only(
                             topStart: Radius.circular(10),
@@ -330,7 +328,7 @@ class PodiumWidgetState extends State<PodiumWidget> {
                           Container(
                             height: screenHeight * 0.01,
                           ),
-                          Text(
+                          const Text(
                             "1°",
                             style: TextStyle(color: Colors.black, fontSize: 30),
                           ),
@@ -345,12 +343,12 @@ class PodiumWidgetState extends State<PodiumWidget> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Container(
-                        padding: widget.usersList.length >= 3 ? EdgeInsets.all(2) : null,
-                        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                        padding: widget.usersList.length >= 3 ? const EdgeInsets.all(2) : null,
+                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                         child: widget.usersList.length >= 3
                             ? ClipOval(
                                 child: SizedBox.fromSize(
-                                  size: Size.fromRadius(20),
+                                  size: const Size.fromRadius(20),
                                   child: widget.usersList[2].image == null
                                       ? Image.asset(
                                           "lib/assets/user_images/default_user_img.png",
@@ -370,7 +368,7 @@ class PodiumWidgetState extends State<PodiumWidget> {
                       padding: const EdgeInsets.all(3.0),
                       child: Text(
                         widget.usersList.length >= 3 ? widget.usersList[2].name : "",
-                        style: TextStyle(color: Colors.white, fontSize: 15),
+                        style: const TextStyle(color: Colors.white, fontSize: 15),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -378,14 +376,14 @@ class PodiumWidgetState extends State<PodiumWidget> {
                       height: screenHeight * 0.005,
                     ),
                     Container(
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadiusDirectional.only(topEnd: Radius.circular(10), bottomEnd: Radius.circular(5))),
+                      decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadiusDirectional.only(topEnd: Radius.circular(10), bottomEnd: Radius.circular(5))),
                       child: Center(
                         child: Column(
                           children: [
                             Container(
                               height: screenHeight * 0.01,
                             ),
-                            Text(
+                            const Text(
                               "3°",
                               style: TextStyle(color: Colors.black, fontSize: 30),
                             ),
@@ -436,19 +434,19 @@ class AdditionalOptionsPopUpMenuState extends State<AdditionalOptionsPopUpMenu> 
                           return AlertDialog(
                             title: Column(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.loop,
                                   color: Colors.red,
                                   size: 80,
                                 ),
-                                Text(
+                                const Text(
                                   "Are you sure you want to reset users ranking?",
                                   style: TextStyle(
                                     color: Colors.black,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                Text(
+                                const Text(
                                   "By doing so, scores will be set to zero and ongoing rankings will be saved on history!",
                                   style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w400),
                                   textAlign: TextAlign.center,

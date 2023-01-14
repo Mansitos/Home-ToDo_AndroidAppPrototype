@@ -6,6 +6,8 @@ import 'package:home_to_do/custom_widgets/user_form_dialog.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/users_utilities.dart' as users;
 
+// User Tile-List widget
+
 class UserTileWidget extends StatefulWidget {
   const UserTileWidget({Key? key, required this.user, required this.onChange}) : super(key: key);
 
@@ -53,8 +55,8 @@ class UserTileWidgetState extends State<UserTileWidget> {
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: Text("🔥 Confirm user delete?"),
-                                content: Text("Tasks from this user will be moved to default user \"🙂 All\".\nYou can't undo this operation"),
+                                title: const Text("🔥 Confirm user delete?"),
+                                content: const Text("Tasks from this user will be moved to default user \"🙂 All\".\nYou can't undo this operation"),
                                 actions: <Widget>[
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
@@ -151,11 +153,11 @@ class UserTileWidgetState extends State<UserTileWidget> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                          padding: EdgeInsets.all(2),
-                          decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                           child: ClipOval(
                             child: SizedBox.fromSize(
-                              size: Size.fromRadius(18),
+                              size: const Size.fromRadius(18),
                               child: widget.user.image == null
                                   ? Image.asset(
                                       "lib/assets/user_images/default_user_img.png",

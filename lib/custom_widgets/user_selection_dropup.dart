@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:home_to_do/data_types/user.dart';
 import 'package:home_to_do/utilities/globals.dart' as globals;
 
+// Main-Screen User selection drop-up widget
+
 class UserSelectionDropUpWidget extends StatefulWidget {
   UserSelectionDropUpWidget({Key? key, required this.onUserSelected, required this.actuallySelectedUser}) : super(key: key);
 
@@ -48,7 +50,7 @@ class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
                 color: Colors.black.withOpacity(0.5),
                 spreadRadius: 0.05,
                 blurRadius: 6,
-                offset: Offset(0, 0), // changes position of shadow
+                offset: const Offset(0, 0), // changes position of shadow
               ),
             ],
           ),
@@ -56,7 +58,7 @@ class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
           width: screenWidth * 0.175,
           child: Card(
             shape: RoundedRectangleBorder(
-              side: BorderSide(color: Colors.black87, width: 1.5),
+              side: const BorderSide(color: Colors.black87, width: 1.5),
               borderRadius: BorderRadius.circular(screenWidth * 0.0425),
             ),
             child: Padding(
@@ -89,7 +91,7 @@ class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
               IconButton(
                 padding: EdgeInsets.zero,
                 icon: Container(
-                    padding: is_selected ? EdgeInsets.all(4) : EdgeInsets.all(2),
+                    padding: is_selected ? const EdgeInsets.all(4) : const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       color: is_selected ? Colors.amber : Colors.black,
                       shape: BoxShape.circle,
@@ -114,7 +116,7 @@ class UserSelectionDropUpWidgetState extends State<UserSelectionDropUpWidget> {
               ),
               Text(
                 current_user.name,
-                style: is_selected ? TextStyle(fontSize: 13) : TextStyle(fontSize: 12),
+                style: is_selected ? const TextStyle(fontSize: 13) : const TextStyle(fontSize: 12),
               )
             ],
           ));

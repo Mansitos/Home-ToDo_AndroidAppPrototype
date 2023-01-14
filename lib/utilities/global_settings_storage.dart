@@ -32,7 +32,7 @@ class GlobalSettingsStorage {
   Future<File> saveGlobalSettingsToFile(GlobalSettings settings) async {
     final file = await _localGlobalSettingsFile;
 
-    String encode = settings.lastUniqueGeneratedID.toString() + "|" + encodeBool(settings.popUpMessagesEnabled)  + "|" + encodeBool(settings.compactTaskListViewEnabled) + "|" + encodeBool(settings.alwaysShowExpiredTasks) + "|" + encodeBool(settings.autoMonthOldDelete);
+    String encode = settings.lastUniqueGeneratedID.toString() + "|" + encodeBool(settings.popUpMessagesEnabled) + "|" + encodeBool(settings.compactTaskListViewEnabled) + "|" + encodeBool(settings.alwaysShowExpiredTasks) + "|" + encodeBool(settings.autoMonthOldDelete);
 
     debugPrint("\n > Global Settings saved successfully! location/path: " + file.path);
     return file.writeAsString('$encode');
@@ -45,7 +45,7 @@ class GlobalSettingsStorage {
 
       List<String> data = contents.split('|');
 
-      if(contents != "") {
+      if (contents != "") {
         GlobalSettings settings = GlobalSettings(lastUniqueGeneratedID: int.parse(data[0]), popUpMessagesEnabled: decodeBool(data[1]), compactTaskListViewEnabled: decodeBool(data[2]), alwaysShowExpiredTasks: decodeBool(data[3]), autoMonthOldDelete: decodeBool(data[4]));
 
         globals.lastUniqueGeneratedID = settings.lastUniqueGeneratedID;

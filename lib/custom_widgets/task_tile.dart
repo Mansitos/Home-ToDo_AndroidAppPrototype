@@ -1,13 +1,13 @@
 import 'dart:math';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:home_to_do/custom_widgets/pop_up_message.dart';
 import 'package:home_to_do/data_types/task.dart';
 import 'package:home_to_do/pages/task_page.dart';
 import 'package:home_to_do/utilities/task_utilities.dart' as tasks;
 import 'package:home_to_do/utilities/globals.dart' as globals;
-
 import '../utilities/generic_utilities.dart';
+
+// Task-Tile widget (widget for each task in the list of tasks)
 
 class TaskTileWidget extends StatefulWidget {
   const TaskTileWidget({Key? key, required this.task, required this.onChange, required this.onTaskComplete}) : super(key: key);
@@ -41,9 +41,9 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
         },
         child: TextButton(
           style: TextButton.styleFrom(
-            primary: Colors.black,
+            foregroundColor: Colors.black,
             backgroundColor: selected == false ? Colors.white : Colors.white,
-            padding: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? EdgeInsets.only(left: 5, top: 4, bottom: 4, right: 5) : EdgeInsets.all(1),
+            padding: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? const EdgeInsets.only(left: 5, top: 4, bottom: 4, right: 5) : const EdgeInsets.all(1),
           ),
           onLongPress: () {
             showMenu(
@@ -64,8 +64,8 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: Text("🔥 Confirm task delete?"),
-                                content: Text("You can't undo this operation!"),
+                                title: const Text("🔥 Confirm task delete?"),
+                                content: const Text("You can't undo this operation!"),
                                 actions: <Widget>[
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
@@ -163,11 +163,11 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Padding(
-                padding: EdgeInsets.only(right: 5),
+                padding: const EdgeInsets.only(right: 5),
                 child: Transform.scale(
                   scale: 1.55,
                   child: Checkbox(
-                      shape: CircleBorder(),
+                      shape: const CircleBorder(),
                       checkColor: Colors.black,
                       activeColor: Colors.amber,
                       value: selected,
@@ -181,7 +181,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
               ),
               Expanded(
                 child: Padding(
-                  padding: selected == true ? EdgeInsets.only(top: 0, bottom: 0) : EdgeInsets.only(top: 2, bottom: 2),
+                  padding: selected == true ? const EdgeInsets.only(top: 0, bottom: 0) : const EdgeInsets.only(top: 2, bottom: 2),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -210,11 +210,11 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                     Padding(
                       padding: const EdgeInsets.only(right: 5, left: 5, top: 1, bottom: 0),
                       child: Container(
-                          padding: EdgeInsets.all(2),
-                          decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
                           child: ClipOval(
                             child: SizedBox.fromSize(
-                              size: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? Size.fromRadius(18) : Size.fromRadius(16),
+                              size: globals.compactTaskListViewEnabled == false && globals.activeViewMode != "calendar" ? const Size.fromRadius(18) : const Size.fromRadius(16),
                               child: widget.task.user.image == null
                                   ? Image.asset(
                                       _getDefaultUserImage(widget.task.user),
@@ -234,7 +234,7 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
                       padding: const EdgeInsets.only(bottom: 2),
                       child: Text(
                         _generateScoreWidgetText(),
-                        style: TextStyle(fontSize: 8),
+                        style: const TextStyle(fontSize: 8),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -249,29 +249,13 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
   }
 
   Widget _getTaskTileDescriptionTextWidget() {
-    if (globals.debugMode == false) {
-      if (widget.task.description != "") {
-        return Text(
-          widget.task.description,
-          style: selected == true ? TextStyle(fontSize: 10, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 11),
-        );
-      } else {
-        return Container();
-      }
-    } else {
-      // So variables can be seen at run-time.....
+    if (widget.task.description != "") {
       return Text(
-        ">> DEBUG MODE <<\n" + widget.task.toString(),
-        style: selected == true ? TextStyle(fontSize: 10, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 11),
+        widget.task.description,
+        style: selected == true ? const TextStyle(fontSize: 10, decoration: TextDecoration.lineThrough, color: Colors.black54) : const TextStyle(fontSize: 11),
       );
-    }
-  }
-
-  String _hourToString(TimeOfDay selectedHour) {
-    if (selectedHour.minute >= 10) {
-      return selectedHour.hour.toString() + ":" + selectedHour.minute.toString();
     } else {
-      return selectedHour.hour.toString() + ":0" + selectedHour.minute.toString();
+      return Container();
     }
   }
 
@@ -305,17 +289,17 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
   Widget _getRepeatWidget() {
     List<Widget> repeatWidget = [];
 
-    TextStyle style = selected == true ? TextStyle(fontSize: 12, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 12);
+    TextStyle style = selected == true ? const TextStyle(fontSize: 12, decoration: TextDecoration.lineThrough, color: Colors.black54) : const TextStyle(fontSize: 12);
 
     if (widget.task.repeat != "No") {
       repeatWidget = [
-        Icon(
+        const Icon(
           Icons.loop,
           size: 14,
           color: Colors.black87,
         ),
         Text(
-          _getWidgetRepatText() + " ",
+          _getWidgetRepeatText() + " ",
           style: style,
         )
       ];
@@ -329,19 +313,11 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
 
     if (widget.task.notification == true) {
       notificationWidget = [
-        Icon(
-          Icons.notifications_none_sharp,
-          size: 14,
-          color: Colors.black87,
-        ),
+        const Icon(Icons.notifications_none_sharp, size: 14, color: Colors.black87),
       ];
     } else {
       notificationWidget = [
-        Icon(
-          Icons.notifications_off_outlined,
-          size: 14,
-          color: Colors.black87,
-        ),
+        const Icon(Icons.notifications_off_outlined, size: 14, color: Colors.black87),
       ];
     }
 
@@ -349,8 +325,8 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
         children: notificationWidget +
             [
               Text(
-                _hourToString(widget.task.timeLimit) + " - " + dateToString(widget.task.dateLimit),
-                style: selected == true ? TextStyle(fontSize: 12, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 12),
+                hourToString(widget.task.timeLimit) + " - " + dateToString(widget.task.dateLimit),
+                style: selected == true ? const TextStyle(fontSize: 12, decoration: TextDecoration.lineThrough, color: Colors.black54) : const TextStyle(fontSize: 12),
               ),
             ]);
   }
@@ -358,11 +334,11 @@ class TaskTileWidgetState extends State<TaskTileWidget> {
   Widget _getTaskTileTitleWidget() {
     return Text(
       widget.task.category.emoji + " " + widget.task.name,
-      style: selected == true ? TextStyle(fontSize: 17, decoration: TextDecoration.lineThrough, color: Colors.black54) : TextStyle(fontSize: 17),
+      style: selected == true ? const TextStyle(fontSize: 17, decoration: TextDecoration.lineThrough, color: Colors.black54) : const TextStyle(fontSize: 17),
     );
   }
 
-  _getWidgetRepatText() {
+  _getWidgetRepeatText() {
     String rep = widget.task.repeat;
     if (rep != "No" && rep != "Every Day" && rep != "Every Week" && rep != "Every Month") {
       return "Every " + rep + " Days";

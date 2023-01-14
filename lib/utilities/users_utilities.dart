@@ -33,7 +33,7 @@ Future<void> modifyUserByName(String oldName, String newName, int score, File? n
 
   File? oldImage = oldUser.image;
 
-  if(!updateScoreMode) {
+  if (!updateScoreMode) {
     if (newImage != null) {
       // ... there is a new image
       await globals.usersStorage.saveUserImage(newName, newImage); // ... save the new one
@@ -68,7 +68,7 @@ Future<void> _updateTaskWithMatchingUser(String oldUserName, int newUserIndex) a
 }
 
 Future<void> deleteUser(User user) async {
-  // TODO: delete image file!
+
   debugPrint("\n > Delete class with name: " + user.name);
   int index = getIndexOfUserByName(user.name);
   User oldUser = globals.users[index];

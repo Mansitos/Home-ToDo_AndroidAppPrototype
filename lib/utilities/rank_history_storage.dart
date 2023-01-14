@@ -61,18 +61,10 @@ class RankHistoryStorage {
           rankHistoryEntries.add(entryToAdd);
         }
       } else {
-        rankHistoryEntries.add(RankHistoryEntry(startDate: DateTime(0),
-            endDate: DateTime.now(),
-            firstUser: "firstUser",
-            secondUser: "secondUser",
-            thirdUser: "thirdUser",
-            firstScore: 0,
-            secondScore: 0,
-            thirdScore: 0));
+        rankHistoryEntries.add(RankHistoryEntry(startDate: DateTime(0), endDate: DateTime.now(), firstUser: "firstUser", secondUser: "secondUser", thirdUser: "thirdUser", firstScore: 0, secondScore: 0, thirdScore: 0));
         print(" > No saved rank history entries! Restoring the default one!");
         await globals.rankHistoryStorage.saveRankHistoryToFile(rankHistoryEntries);
       }
-
 
       // Updating globals entry
       globals.rankHistoryEntries = rankHistoryEntries;
