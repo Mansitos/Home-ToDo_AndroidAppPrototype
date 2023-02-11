@@ -7,6 +7,8 @@ This is my first mobile application ever built. My first project in Dart+Flutter
 
 Università degli Studi di Udine - Italy
 
+Exam mark: 30L/30
+
 ---
 
 ## Short app description
